@@ -269,7 +269,11 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
   <div class="page" id="page-hist">
     <div class="page-header">
       <div class="page-title" style="margin-bottom:0">履歴</div>
-      <button class="btn-sm" onclick="clearAll()">全削除</button>
+      <div style="display:flex;gap:6px">
+        <button class="btn-sm" onclick="exportData()">📤 書き出し</button>
+        <button class="btn-sm" onclick="importData()">📥 取り込み</button>
+        <button class="btn-sm" onclick="clearAll()">全削除</button>
+      </div>
     </div>
     <div class="card" id="hist-out"></div>
   </div>
@@ -918,6 +922,50 @@ function delEntry(id) {
 function clearAll() {
   if (!confirm('全データを削除しますか？')) return;
   db = []; saveDB(); renderHist(); toast('全削除しました');
+}
+
+function exportData() {
+  const json = JSON.stringify(db);
+  // ファイルダウンロード
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toISOString().slice(0,10);
+  a.href = url;
+  a.download = `kaitori_backup_${dateStr}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast(`${db.length}件を書き出しました`);
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json,application/json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        if (!Array.isArray(imported)) throw new Error('不正な形式');
+        const mode = confirm(`${imported.length}件のデータを取り込みます。\n\n[OK] 現在のデータに追加\n[キャンセル] 中止`);
+        if (!mode) return;
+        // 重複除去（同じIDは上書き）
+        const existingIds = new Set(db.map(e => e.id));
+        const newEntries = imported.filter(e => !existingIds.has(e.id));
+        db = [...db, ...newEntries];
+        saveDB();
+        renderHist();
+        toast(`${newEntries.length}件を追加しました`);
+      } catch (err) {
+        toast('ファイルの読み込みに失敗しました');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
 }
 
 document.addEventListener('touchstart', e => {
