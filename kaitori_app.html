@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="買取メモ">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1a1a1a">
+<title>買取メモ</title>
+<link rel="manifest" href="manifest.json">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface2: #f2f1ee;
+  --border: rgba(0,0,0,0.10);
+  --border2: rgba(0,0,0,0.18);
+  --text: #1a1a1a;
+  --text2: #666;
+  --text3: #999;
+  --accent: #1a1a1a;
+  --rank-ab: #185FA5;
+  --rank-b: #0F6E56;
+  --rank-d: #8B3A1A;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --nav-h: 60px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111110;
+    --surface: #1e1e1c;
+    --surface2: #2a2a28;
+    --border: rgba(255,255,255,0.10);
+    --border2: rgba(255,255,255,0.18);
+    --text: #f0efe9;
+    --text2: #999;
+    --text3: #666;
+  }
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html, body { height: 100%; overflow: hidden; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', 'Yu Gothic', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; }
+
+/* Layout */
+#app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.page { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 16px 16px calc(var(--nav-h) + var(--safe-bottom) + 16px); display: none; }
+.page.active { display: block; }
+
+/* Nav */
+nav { position: fixed; bottom: 0; left: 0; right: 0; height: calc(var(--nav-h) + var(--safe-bottom)); padding-bottom: var(--safe-bottom); background: var(--surface); border-top: 0.5px solid var(--border); display: flex; z-index: 100; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; cursor: pointer; color: var(--text3); font-size: 11px; transition: color 0.15s; padding-top: 6px; }
+.nav-item.active { color: var(--text); }
+.nav-icon { font-size: 22px; line-height: 1; }
+
+/* Cards */
+.card { background: var(--surface); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 16px; margin-bottom: 12px; }
+
+/* Form */
+.form-group { margin-bottom: 14px; }
+.form-label { font-size: 12px; color: var(--text2); margin-bottom: 6px; display: block; font-weight: 500; letter-spacing: 0.03em; }
+.form-control { width: 100%; padding: 12px 14px; font-size: 16px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm); background: var(--surface); color: var(--text); outline: none; appearance: none; -webkit-appearance: none; }
+.form-control:focus { border-color: var(--text); }
+select.form-control { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; }
+textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
+
+/* Rank inputs */
+.rank-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.rank-block { border: 0.5px solid var(--border2); border-radius: var(--radius-sm); padding: 10px; }
+.rank-name { font-size: 11px; font-weight: 600; margin-bottom: 6px; }
+.rank-name.ab { color: var(--rank-ab); }
+.rank-name.b { color: var(--rank-b); }
+.rank-name.d { color: var(--rank-d); }
+.rank-input { width: 100%; border: none; background: transparent; color: var(--text); font-size: 16px; font-weight: 500; outline: none; padding: 0; }
+.rank-unit { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Button */
+.btn { width: 100%; padding: 15px; font-size: 16px; font-weight: 600; border: none; border-radius: var(--radius-sm); cursor: pointer; transition: opacity 0.15s, transform 0.1s; }
+.btn:active { transform: scale(0.98); opacity: 0.85; }
+.btn-primary { background: var(--text); color: var(--bg); }
+.btn-sm { width: auto; padding: 6px 14px; font-size: 13px; font-weight: 500; border-radius: 6px; background: var(--surface2); color: var(--text2); border: 0.5px solid var(--border); }
+
+/* Suggest */
+.input-wrap { position: relative; }
+.suggest-drop { position: absolute; top: 100%; left: 0; right: 0; background: var(--surface); border: 0.5px solid var(--border2); border-top: none; border-radius: 0 0 var(--radius-sm) var(--radius-sm); max-height: 200px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.suggest-item { padding: 12px 14px; font-size: 15px; cursor: pointer; border-bottom: 0.5px solid var(--border); }
+.suggest-item:last-child { border-bottom: none; }
+.suggest-item:active { background: var(--surface2); }
+.suggest-new { color: var(--rank-b); font-weight: 500; }
+
+/* Search */
+.search-wrap { position: relative; margin-bottom: 12px; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 18px; pointer-events: none; }
+.search-input { padding-left: 42px !important; }
+.filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.filter-row select { font-size: 14px; padding: 10px 12px; }
+
+/* Result card */
+.result-card { background: var(--surface); border-radius: var(--radius); border: 0.5px solid var(--border); padding: 16px; margin-bottom: 12px; }
+.result-brand { font-size: 13px; color: var(--text2); margin-bottom: 2px; }
+.result-model { font-size: 17px; font-weight: 600; margin-bottom: 12px; }
+.price-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.price-cell { background: var(--surface2); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+.price-rank { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.price-val { font-size: 17px; font-weight: 600; line-height: 1.1; }
+.price-min { font-size: 11px; color: var(--text3); margin-top: 3px; }
+.price-date { font-size: 10px; color: var(--text3); margin-top: 1px; }
+.chart-wrap { height: 160px; margin-bottom: 12px; }
+.memo-box { background: var(--surface2); border-left: 2px solid var(--border2); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; padding: 10px 12px; font-size: 13px; color: var(--text2); line-height: 1.5; }
+
+/* History */
+.hist-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 0.5px solid var(--border); }
+.hist-item:last-child { border-bottom: none; }
+.hist-left { flex: 1; min-width: 0; }
+.hist-brand { font-size: 12px; color: var(--text2); }
+.hist-model { font-size: 15px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+.hist-del { padding: 8px 12px; background: transparent; border: 0.5px solid var(--border); border-radius: 6px; color: var(--text3); font-size: 13px; cursor: pointer; flex-shrink: 0; margin-left: 12px; }
+
+/* Toast */
+.toast { position: fixed; bottom: calc(var(--nav-h) + var(--safe-bottom) + 16px); left: 50%; transform: translateX(-50%) translateY(10px); background: var(--text); color: var(--bg); padding: 10px 20px; border-radius: 20px; font-size: 14px; font-weight: 500; z-index: 200; opacity: 0; transition: opacity 0.25s, transform 0.25s; pointer-events: none; white-space: nowrap; }
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* Page title */
+.page-title { font-size: 22px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.03em; }
+.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+
+/* Empty state */
+.empty { text-align: center; padding: 48px 16px; color: var(--text3); font-size: 14px; }
+.empty-icon { font-size: 36px; margin-bottom: 8px; }
+
+/* Section header */
+.section-label { font-size: 11px; font-weight: 600; color: var(--text3); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- 登録 -->
+  <div class="page active" id="page-reg">
+    <div class="page-title">登録</div>
+
+    <div class="form-group">
+      <label class="form-label">カテゴリー</label>
+      <select class="form-control" id="reg-cat" onchange="updateBrands()">
+        <option value="">選択してください</option>
+        <option>アパレル</option>
+        <option>バッグ</option>
+        <option>時計</option>
+        <option>ブランドジュエリー</option>
+        <option>NBジュエリー</option>
+        <option>ブランドアクセサリー</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">ブランド</label>
+      <div class="input-wrap">
+        <input class="form-control" id="reg-brand" type="text" placeholder="入力して検索" autocomplete="off" oninput="suggestBrand()" autocorrect="off" autocapitalize="off">
+        <div class="suggest-drop" id="brand-drop"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">モデル名</label>
+      <div class="input-wrap">
+        <input class="form-control" id="reg-model" type="text" placeholder="モデル名を入力" autocomplete="off" oninput="suggestModel()" autocorrect="off">
+        <div class="suggest-drop" id="model-drop"></div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">日付</label>
+      <input class="form-control" id="reg-date" type="date">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">買取金額（円）</label>
+      <div class="rank-row">
+        <div class="rank-block">
+          <div class="rank-name ab">AB</div>
+          <input class="rank-input" id="p-AB" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)">
+          <div class="rank-unit">円</div>
+        </div>
+        <div class="rank-block">
+          <div class="rank-name b">B</div>
+          <input class="rank-input" id="p-B" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)">
+          <div class="rank-unit">円</div>
+        </div>
+        <div class="rank-block">
+          <div class="rank-name d">D</div>
+          <input class="rank-input" id="p-D" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)">
+          <div class="rank-unit">円</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label class="form-label">サイズ</label>
+          <input class="form-control" id="reg-size" type="text" placeholder="例: M, 38, 42mm">
+        </div>
+        <div>
+          <label class="form-label">色</label>
+          <input class="form-control" id="reg-color" type="text" placeholder="例: ブラック">
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">ライン名</label>
+      <input class="form-control" id="reg-line" type="text" placeholder="例: バーバリーチェック, エクスプローラー">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">参考写真</label>
+      <div id="img-preview-wrap" style="display:none;margin-bottom:10px;position:relative">
+        <img id="img-preview" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--radius-sm);border:0.5px solid var(--border)">
+        <button onclick="clearImage()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn" style="background:var(--surface2);color:var(--text);border:0.5px solid var(--border2);padding:12px;font-size:14px" onclick="document.getElementById('img-camera').click()">📷 カメラ撮影</button>
+        <button class="btn" style="background:var(--surface2);color:var(--text);border:0.5px solid var(--border2);padding:12px;font-size:14px" onclick="document.getElementById('img-gallery').click()">🖼️ カメラロール</button>
+      </div>
+      <input type="file" id="img-camera" accept="image/*" capture="environment" style="display:none" onchange="handleImage(this)">
+      <input type="file" id="img-gallery" accept="image/*" style="display:none" onchange="handleImage(this)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">メモ</label>
+      <textarea class="form-control" id="reg-memo" placeholder="基準・注意事項など"></textarea>
+    </div>
+
+    <button class="btn btn-primary" onclick="register()">登録する</button>
+  </div>
+
+  <!-- 検索 -->
+  <div class="page" id="page-search">
+    <div class="page-title">検索</div>
+    <div class="filter-row">
+      <select class="form-control" id="s-cat" onchange="search()">
+        <option value="">全カテゴリー</option>
+        <option>アパレル</option>
+        <option>バッグ</option>
+        <option>時計</option>
+        <option>ブランドジュエリー</option>
+        <option>NBジュエリー</option>
+        <option>ブランドアクセサリー</option>
+      </select>
+      <select class="form-control" id="s-rank" onchange="search()">
+        <option value="">全ランク</option>
+        <option value="AB">ランク AB</option>
+        <option value="B">ランク B</option>
+        <option value="D">ランク D</option>
+      </select>
+    </div>
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input class="form-control search-input" id="s-q" type="search" placeholder="ブランド・モデル名で検索" oninput="search()" autocorrect="off" autocapitalize="off">
+    </div>
+    <div id="search-out"></div>
+  </div>
+
+  <!-- 履歴 -->
+  <div class="page" id="page-hist">
+    <div class="page-header">
+      <div class="page-title" style="margin-bottom:0">履歴</div>
+      <button class="btn-sm" onclick="clearAll()">全削除</button>
+    </div>
+    <div class="card" id="hist-out"></div>
+  </div>
+
+  <!-- ナビ -->
+  <nav>
+    <div class="nav-item active" id="nav-reg" onclick="showPage('reg')">
+      <div class="nav-icon">✏️</div>
+      <div>登録</div>
+    </div>
+    <div class="nav-item" id="nav-search" onclick="showPage('search')">
+      <div class="nav-icon">🔍</div>
+      <div>検索</div>
+    </div>
+    <div class="nav-item" id="nav-hist" onclick="showPage('hist')">
+      <div class="nav-icon">📋</div>
+      <div>履歴</div>
+    </div>
+  </nav>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const BRAND_ALIASES = {
+  "1 piu 1 uguale 3": ["ウノピュウノウグァーレトレ", "うのぴゅ", "1piu", "uno"],
+  "A BATHING APE": ["アベイシングエイプ", "あべいしんぐ", "ベイプ", "べいぷ", "bape", "エイプ", "えいぷ"],
+  "A.P.C": ["アーペーセー", "あーぺーせー", "apc"],
+  "ACNE STUDIOS": ["アクネ", "あくね", "acne"],
+  "ACRONYM": ["アクロニウム", "あくろにうむ", "acronym"],
+  "ADIDAS": ["アディダス", "あでぃだす", "adidas"],
+  "ADIDAS BY STELLA MCCARTNEY": ["アディダスステラ", "あでぃだすすてら"],
+  "AIGLE": ["エーグル", "えーぐる", "aigle"],
+  "ALEXANDER McQUEEN": ["アレキサンダーマックイーン", "あれきさんだー", "マックイーン", "まっくいーん", "mcqueen"],
+  "Alexander Wang": ["アレキサンダーワン", "あれきさんだーわん", "ワン", "わん", "wang"],
+  "AMI PARIS": ["アミパリ", "あみぱり", "ami"],
+  "ANNA MOLINARI": ["アンナモリナリ", "あんなもりなり", "molinari"],
+  "AQUASCUTUM": ["アクアスキュータム", "あくあすきゅーたむ", "aqua"],
+  "ARCTERYX": ["アークテリクス", "あーくてりくす", "arc", "アーク"],
+  "ARMANI COLLEZIONI": ["アルマーニ", "あるまーに", "armani", "コレッツィオーニ"],
+  "ARMANI EXCHANGE": ["アルマーニエクスチェンジ", "あるまーに", "ax", "armani"],
+  "ARMANI JEANS": ["アルマーニジーンズ", "あるまーに", "armani"],
+  "AURALEE": ["オーラリー", "おーらりー", "auralee"],
+  "AVIREX": ["アヴィレックス", "あびれっくす", "avirex"],
+  "BALENCIAGA": ["バレンシアガ", "ばれんしあが", "balenciaga", "バレンシ"],
+  "BALLANTYNE": ["バランタイン", "ばらんたいん", "ballantyne"],
+  "BALLY": ["バリー", "ばりー", "bally"],
+  "BANANA REPUBLIC": ["バナナリパブリック", "ばなな", "banana"],
+  "BARACUTA": ["バラクータ", "ばらくーた", "baracuta"],
+  "BARBOUR": ["バブアー", "ばぶあー", "barbour"],
+  "BATONER": ["バトナー", "ばとなー", "batoner"],
+  "BEAMS": ["ビームス", "びーむす", "beams"],
+  "BEAUTIFUL PEOPLE": ["ビューティフルピープル", "びゅーてぃふる", "beautiful"],
+  "BELVEST": ["ベルベスト", "べるべすと", "belvest"],
+  "Berluti": ["ベルルッティ", "べるるってぃ", "berluti"],
+  "BLACK FLEECE": ["ブラックフリース", "ぶらっくふりーす"],
+  "BLACK LABEL CRESTBRI": ["ブラックレーベル", "ぶらっくれーべる", "クレストブリッジ"],
+  "BORSALINO": ["ボルサリーノ", "ぼるさりーの", "borsalino"],
+  "BOTTEGA VENETA": ["ボッテガ", "ぼってが", "bottega", "ボッテガヴェネタ", "ヴェネタ"],
+  "BRIONI": ["ブリオーニ", "ぶりおーに", "brioni"],
+  "BROOKS BROTHERS": ["ブルックスブラザーズ", "ぶるっくす", "brooks"],
+  "BRUNELLO CUCINELLI": ["ブルネロクチネリ", "ぶるねろ", "brunello", "クチネリ"],
+  "BRUNO MAGLI": ["ブルーノマリ", "ぶるーのまり", "magli"],
+  "BURBERRY": ["バーバリー", "ばーばりー", "burberry", "バーバ"],
+  "BVLGARI": ["ブルガリ", "ぶるがり", "bvlgari", "bulgari"],
+  "C.DIOR": ["ディオール", "でぃおーる", "dior", "クリスチャンディオール"],
+  "C.P COMPANY": ["シーピーカンパニー", "しーぴー", "cp company"],
+  "CALVIN KLEIN": ["カルバンクライン", "かるばん", "ck", "calvin"],
+  "CANADA GOOSE": ["カナダグース", "かなだぐーす", "canada goose", "カナグー"],
+  "CARTIER": ["カルティエ", "かるてぃえ", "cartier"],
+  "CARUSO": ["カルーゾ", "かるーぞ", "caruso"],
+  "CARVEN": ["カルヴェン", "かるゔぇん", "carven"],
+  "CELINE": ["セリーヌ", "せりーぬ", "celine"],
+  "CESARE ATTOLINI": ["チェザレアットリーニ", "ちぇざれ", "attolini"],
+  "CHANEL": ["シャネル", "しゃねる", "chanel"],
+  "Chloe": ["クロエ", "くろえ", "chloe"],
+  "Christian Dior": ["クリスチャンディオール", "くりすちゃん", "dior", "ディオール"],
+  "Christian Louboutin": ["クリスチャンルブタン", "くりすちゃん", "ルブタン", "るぶたん", "louboutin"],
+  "CHROME HEARTS": ["クロムハーツ", "くろむはーつ", "chrome", "クロム"],
+  "CINQUANTA": ["チンクアンタ", "ちんくあんた", "cinquanta"],
+  "COACH": ["コーチ", "こーち", "coach"],
+  "COLUMBIA": ["コロンビア", "ころんびあ", "columbia"],
+  "COMME des GARCONS": ["コムデギャルソン", "こむでぎゃるそん", "comme", "ギャルソン", "ぎゃるそん"],
+  "COMOLI": ["コモリ", "こもり", "comoli"],
+  "CORNELIANI": ["コルネリアーニ", "こるねりあーに", "corneliani"],
+  "CRUCIANI": ["クルチアーニ", "くるちあーに", "cruciani"],
+  "D&G": ["ディーアンドジー", "でぃーあんどじー", "dg"],
+  "DANTON": ["ダントン", "だんとん", "danton"],
+  "DE PETRILLO": ["デぺトリオ", "でぺとりお", "petrillo"],
+  "DESCENTE": ["デサント", "でさんと", "descente"],
+  "DIANE von FURSTENBERG": ["ダイアンフォンファステンバーグ", "だいあん", "dvf"],
+  "DIESEL": ["ディーゼル", "でぃーぜる", "diesel"],
+  "Dior HOMME": ["ディオールオム", "でぃおーるおむ", "dior homme"],
+  "DISCOVERED": ["ディスカバード", "でぃすかばーど"],
+  "DOLCE&GABBANA": ["ドルチェアンドガッバーナ", "どるちぇ", "dolce", "ガッバーナ", "dg", "d&g"],
+  "DOUBLE RL": ["ダブルアールエル", "だぶるーる", "rrl", "ダブルRL"],
+  "DRIS VAN NOTEN": ["ドリスヴァンノッテン", "どりす", "dries", "ノッテン"],
+  "DRUMOHR": ["ドルモア", "どるもあ", "drumohr"],
+  "DSQUARED2": ["ディースクエアード", "でぃーすくえあーど", "dsquared"],
+  "DUNHILL": ["ダンヒル", "だんひる", "dunhill"],
+  "DUVETICA": ["デュベチカ", "でゅべちか", "duvetica"],
+  "EMILIO PUCCI": ["エミリオプッチ", "えみりお", "pucci", "プッチ"],
+  "EMMETI": ["エンメティ", "えんめてぃ", "emmeti"],
+  "EMPORIO ARMANI": ["エンポリオアルマーニ", "えんぽりお", "emporio", "ea"],
+  "ENGINEERED GARMENTS": ["エンジニアードガーメンツ", "えんじにあーど", "eg", "engineered"],
+  "ERMANNO SCERVINO": ["エルマンノシュエルビーノ", "えるまんの", "scervino"],
+  "ERMENEGILDO ZEGNA": ["エルメネジルドゼニア", "えるめねじるど", "ゼニア", "ぜにあ", "zegna"],
+  "ESCADA": ["エスカーダ", "えすかーだ", "escada"],
+  "ETRO": ["エトロ", "えとろ", "etro"],
+  "EVISU": ["エヴィス", "えびす", "evisu"],
+  "EYE JUNYA WATANABE": ["アイジュンヤワタナベ", "あいじゅんや", "eye junya"],
+  "F.C.R.B": ["エフシーアールビー", "えふしー", "fcrb"],
+  "FENDI": ["フェンディ", "ふぇんでぃ", "fendi"],
+  "FOXEY": ["フォクシー", "ふぉくしー", "foxey"],
+  "FOXEY BOUTIQUE": ["フォクシーブティック", "ふぉくしー"],
+  "FOXEY NEWYORK": ["フォクシーニューヨーク", "ふぉくしー"],
+  "FRED PERRY": ["フレッドペリー", "ふれっど", "fred perry", "フレペ"],
+  "FURLA": ["フルラ", "ふるら", "furla"],
+  "Giorgio Armani": ["ジョルジオアルマーニ", "じょるじお", "giorgio", "アルマーニ", "あるまーに"],
+  "GIVENCHY": ["ジバンシー", "じばんしー", "givenchy", "ジバンシ"],
+  "GLOVERALL": ["グローバーオール", "ぐろーばー", "gloverall"],
+  "GOYARD": ["ゴヤール", "ごやーる", "goyard"],
+  "GRAN SASSO": ["グランサッソ", "ぐらんさっそ", "gran sasso"],
+  "GUCCI": ["グッチ", "ぐっち", "gucci"],
+  "HELMUT LANG": ["ヘルムートラング", "へるむーと", "helmut", "lang"],
+  "HERMES": ["エルメス", "えるめす", "エルメ", "えるめ", "hermes", "エル", "える", "he", "herm"],
+  "HERNO": ["ヘルノ", "へるの", "herno"],
+  "HUGO BOSS": ["ヒューゴボス", "ひゅーごぼす", "hugo", "boss"],
+  "HUMAN MADE": ["ヒューマンメイド", "ひゅーまん", "human made"],
+  "HYKE": ["ハイク", "はいく", "hyke"],
+  "HYSTERIC GLAMOUR": ["ヒステリックグラマー", "ひすてりっく", "hysteric"],
+  "INCOTEX": ["インコテックス", "いんこてっくす", "incotex"],
+  "ISAIA": ["イザイア", "いざいあ", "isaia"],
+  "ISSEY MIYAKE": ["イッセイミヤケ", "いっせい", "issey", "三宅", "みやけ"],
+  "ISSEY MIYAKE HOME PLISSE": ["オムプリッセ", "おむぷりっせ", "plisse", "プリッセ"],
+  "J.W.ANDERSON": ["ジェイダブリューアンダーソン", "じぇいだぶ", "jw", "anderson"],
+  "J&M Davidson": ["ジェイアンドエムデヴィッドソン", "じぇいあんど", "davidson"],
+  "JIL SANDER": ["ジルサンダー", "じるさんだー", "jil", "sander"],
+  "JOHN SMEDLEY": ["ジョンスメドレー", "じょんすめ", "smedley"],
+  "JOHNLAWRENCESULLIVAN": ["ジョンローレンスサリバン", "じょんろーれんす", "jls"],
+  "JUNYA WATANABE MAN": ["ジュンヤワタナベ", "じゅんや", "junya", "渡辺淳弥"],
+  "Karl Lagerfeld": ["カールラガーフェルド", "かーるらがー", "karl", "lagerfeld"],
+  "kate spade": ["ケイトスペード", "けいとすぺーど", "kate", "spade"],
+  "KENZO": ["ケンゾー", "けんぞー", "kenzo"],
+  "KIRED": ["キーレッド", "きーれっど", "kired"],
+  "KITON": ["キートン", "きーとん", "kiton"],
+  "KITSUNE": ["キツネ", "きつね", "kitsune"],
+  "KRIS VAN ASSCHE": ["クリスヴァンアッシュ", "くりすゔぁん", "kva"],
+  "LACOSTE": ["ラコステ", "らこすて", "lacoste"],
+  "LAD MUSICIAN": ["ラッドミュージシャン", "らっどみゅーじしゃん", "lad"],
+  "LANVIN": ["ランバン", "らんばん", "lanvin"],
+  "LARDINI": ["ラルディーニ", "らるでぃーに", "lardini"],
+  "LAVENHAM": ["ラベンハム", "らべんはむ", "lavenham"],
+  "LEMAIRE": ["ルメール", "るめーる", "lemaire"],
+  "LEONARD": ["レオナール", "れおなーる", "leonard"],
+  "LEWIS LEATHERS": ["ルイスレザー", "るいすれざー", "lewis"],
+  "LOEWE": ["ロエベ", "ろえべ", "loewe"],
+  "Loro Piana": ["ロロピアーナ", "ろろぴあーな", "loro", "piana"],
+  "LOUIS VUITTON": ["ルイヴィトン", "るいびとん", "lv", "vuitton", "ヴィトン", "びとん", "ルイ"],
+  "lucien pellat-finet": ["ルシアンペラフィネ", "るしあん", "pellat"],
+  "MACKINTOSH": ["マッキントッシュ", "まっきんとっしゅ", "mackintosh"],
+  "MAISON KITSUNE": ["メゾンキツネ", "めぞんきつね", "maison kitsune"],
+  "Maison Margiela": ["メゾンマルジェラ", "めぞんまるじぇら", "margiela", "マルジェラ", "まるじぇら", "mm6"],
+  "MAMMUT": ["マムート", "まむーと", "mammut"],
+  "MARC JACOBS": ["マークジェイコブス", "まーくじぇいこぶす", "marc", "jacobs"],
+  "MARIHA": ["マリハ", "まりは", "mariha"],
+  "MARIMEKKO": ["マリメッコ", "まりめっこ", "marimekko"],
+  "MARNI": ["マルニ", "まるに", "marni"],
+  "Max Mara": ["マックスマーラ", "まっくすまーら", "max mara"],
+  "MCQ": ["マックキュー", "まっくきゅー", "mcq"],
+  "MICHAEL KORS": ["マイケルコース", "まいける", "mk", "michael kors"],
+  "MIHARA YASUHIRO": ["ミハラヤスヒロ", "みはらやすひろ", "mihara"],
+  "MIU MIU": ["ミュウミュウ", "みゅうみゅう", "miumiu"],
+  "MM6": ["エムエムシックス", "えむえむ", "mm6", "マルジェラ"],
+  "MONCLER": ["モンクレール", "もんくれーる", "moncler", "モンクレ"],
+  "MOORER": ["ムーレー", "むーれー", "moorer"],
+  "MOOSE KNUCKLES": ["ムースナックルズ", "むーすなっくるず", "moose"],
+  "MOSCHINO": ["モスキーノ", "もすきーの", "moschino"],
+  "MSGM": ["エムエスジーエム", "えむえすじーえむ", "msgm"],
+  "N.HOOLYWOOD": ["エヌハリウッド", "えぬはりうっど", "nhoolywood"],
+  "N°21": ["ヌメロヴェントゥーノ", "ぬめろ", "n21"],
+  "NEEDLES": ["ニードルズ", "にーどるず", "needles"],
+  "NEIGHBORHOOD": ["ネイバーフッド", "ねいばーふっど", "neighborhood", "ネイバー"],
+  "Neil Barrett": ["ニールバレット", "にーるばれっと", "neil barrett"],
+  "NONNATIVE": ["ノンネイティブ", "のんねいてぃぶ", "nonnative"],
+  "NUMBER (N)INE": ["ナンバーナイン", "なんばーないん", "number nine"],
+  "OAMC": ["オーエーエムシー", "おーえーえむしー", "oamc"],
+  "Off-White": ["オフホワイト", "おふほわいと", "off white", "off-white"],
+  "PATAGONIA": ["パタゴニア", "ぱたごにあ", "patagonia"],
+  "Paul Smith": ["ポールスミス", "ぽーるすみす", "paul smith"],
+  "PLAY GARCONS": ["プレイギャルソン", "ぷれいぎゃるそん", "play"],
+  "POLO RALPH LAUREN": ["ポロラルフローレン", "ぽろ", "polo", "ラルフ"],
+  "PRADA": ["プラダ", "ぷらだ", "prada"],
+  "PT01": ["ピーティーゼロウーノ", "ぴーてぃー", "pt01"],
+  "PYRENEX": ["ピレネックス", "ぴれねっくす", "pyrenex"],
+  "R.H VINTAGE": ["ロンハーマンヴィンテージ", "ろんはーまん", "rh vintage"],
+  "RAF SIMONS": ["ラフシモンズ", "らふしもんず", "raf", "simons"],
+  "RAG&BONE": ["ラグアンドボーン", "らぐあんど", "rag bone"],
+  "RALPH LAUREN": ["ラルフローレン", "らるふろーれん", "ralph", "lauren", "ラルフ"],
+  "READYMADE": ["レディーメイド", "れでぃーめいど", "readymade"],
+  "RHC": ["ロンハーマン", "ろんはーまん", "rhc"],
+  "Rick owens": ["リックオウエンス", "りっくおうえんす", "rick", "owens"],
+  "ROBERTO CAVALLI": ["ロベルトカヴァリ", "ろべるとかゔぁり", "cavalli"],
+  "ROBERTO COLLINA": ["ロベルトコリーナ", "ろべるとこりーな", "collina"],
+  "Sacai": ["サカイ", "さかい", "sacai"],
+  "SAINT LAURENT": ["サンローラン", "さんろーらん", "saint laurent", "ysl", "イヴサンローラン"],
+  "SAINT MICHAEL": ["セントマイケル", "せんとまいける", "saint michael"],
+  "Salvatore Ferragamo": ["フェラガモ", "ふぇらがも", "ferragamo", "サルヴァトーレ"],
+  "SARTORIO": ["サルトリオ", "さるとりお", "sartorio"],
+  "SCHOTT": ["ショット", "しょっと", "schott"],
+  "SLOANE": ["スローン", "すろーん", "sloane"],
+  "SOPHNET": ["ソフネット", "そふねっと", "sophnet"],
+  "Stella McCartney": ["ステラマッカートニー", "すてらまっかーとにー", "stella"],
+  "SUPREME": ["シュプリーム", "しゅぷりーむ", "supreme", "シュプ"],
+  "TAGLIATORE": ["タリアトーレ", "たりあとーれ", "tagliatore"],
+  "TATRAS": ["タトラス", "たとらす", "tatras"],
+  "THE NORTH FACE": ["ザノースフェイス", "のーすふぇいす", "tnf", "north face", "ノースフェイス", "ノーフェ"],
+  "THOM BROWNE": ["トムブラウン", "とむぶらうん", "thom browne", "tb"],
+  "Tiffany": ["ティファニー", "てぃふぁにー", "tiffany"],
+  "TOM FORD": ["トムフォード", "とむふぉーど", "tom ford", "tf"],
+  "TOMORROW LAND": ["トゥモローランド", "とぅもろーらんど", "tomorrow land"],
+  "TORY BURCH": ["トリーバーチ", "とりーばーち", "tory burch"],
+  "TRUSSARDI": ["トラサルディ", "とらさるでぃ", "trussardi"],
+  "UNDERCOVER": ["アンダーカバー", "あんだーかばー", "undercover"],
+  "UNIFORM EXPERIMENT": ["ユニフォームエクスペリメント", "ゆにふぉーむ", "ue", "uniform"],
+  "UNITED ARROWS": ["ユナイテッドアローズ", "ゆないてっど", "united arrows", "ua"],
+  "VALENTINO": ["バレンチノ", "ばれんちの", "valentino"],
+  "VERSACE": ["ヴェルサーチ", "ゔぇるさーち", "versace", "ベルサーチ"],
+  "VETEMENTS": ["ヴェトモン", "ゔぇともん", "vetements"],
+  "WACKO MARIA": ["ワコマリア", "わこまりあ", "wacko"],
+  "WOOL RICH": ["ウールリッチ", "うーるりっち", "woolrich"],
+  "WTAPS": ["ダブルタップス", "だぶるたっぷす", "wtaps"],
+  "Y\'s": ["ワイズ", "わいず", "ys"],
+  "Yohji Yamamoto": ["ヨウジヤマモト", "ようじやまもと", "yohji", "山本耀司"],
+  "YSL": ["イヴサンローラン", "いゔさんろーらん", "ysl", "サンローラン"],
+  "ZANONE": ["ザノーネ", "ざのーね", "zanone"],
+  "ANTEPRIMA": ["アンテプリマ", "あんてぷりま", "anteprima"],
+  "DELVAUX": ["デルボー", "でるぼー", "delvaux"],
+  "MCM": ["エムシーエム", "えむしーえむ", "mcm"],
+  "PRIMA CLASSE": ["プリマクラッセ", "ぷりまくらっせ", "prima classe"],
+  "TOD\'S": ["トッズ", "とっず", "tods"],
+  "MORABITO": ["モラビト", "もらびと", "morabito"],
+  "A.D.M.J": ["えーでぃーえむじぇー", "admj"],
+  "ANYA HINDMARCH": ["アニアハインドマーチ", "あにあはいんど", "anya"],
+  "COLE HAAN": ["コールハーン", "こーるはーん", "cole haan"],
+  "COCOMEISTER": ["ココマイスター", "ここまいすたー", "coco"],
+  "GERARDINNI": ["ゲラルディーニ", "げらるでぃーに"],
+  "GLOBE TROTTER": ["グローブトロッター", "ぐろーぶとろったー", "globe trotter"],
+  "MULBERRY": ["マルベリー", "まるべりー", "mulberry"],
+  "PORTER": ["ポーター", "ぽーたー", "porter"],
+  "TUMI": ["トゥミ", "とぅみ", "tumi"],
+  "RIMOWA": ["リモワ", "りもわ", "rimowa"],
+  "SAMANTHA": ["サマンサ", "さまんさ", "samantha"],
+  "VALEXTRA": ["ヴァレクストラ", "ゔぁれくすとら", "valextra"],
+  "THE ROW": ["ザロウ", "ざろう", "the row"],
+  "HIGH CLASS": ["ハイクラス", "はいくらす"],
+  "A.LANGE & SOHNE": ["ランゲゾーネ", "らんげぞーね", "lange", "ランゲ"],
+  "ALAIN SILBERSTEIN": ["アランシルベスタイン", "あらんしるべすたいん", "alain"],
+  "ALPINA": ["アルピナ", "あるぴな", "alpina"],
+  "AQUANAUTIC": ["アクアノウティック", "あくあのうてぃっく"],
+  "AUDEMARS PIGUET": ["オーデマピゲ", "おーでまぴげ", "ap", "オーデマ", "ピゲ"],
+  "BALL WATCH": ["ボールウォッチ", "ぼーるうぉっち", "ball"],
+  "BAUME & MERCIER": ["ボームメルシエ", "ぼーむめるしえ", "baume"],
+  "BEDAT & Co": ["ベダカンパニー", "べだかんぱにー", "bedat"],
+  "BELL & ROSS": ["ベルロス", "べるろす", "bell ross", "br"],
+  "BLANCPAIN": ["ブランパン", "ぶらんぱん", "blancpain"],
+  "BREGUET": ["ブレゲ", "ぶれげ", "breguet"],
+  "BREITLING": ["ブライトリング", "ぶらいとりんぐ", "breitling"],
+  "BULOVA": ["ブローバ", "ぶろーば", "bulova"],
+  "C.Dior": ["クリスチャンディオール", "くりすちゃん", "dior"],
+  "Carrere y Carrera": ["カレライカレラ", "かれらいかれら", "carrera"],
+  "CASIO": ["カシオ", "かしお", "casio"],
+  "CHAUMET": ["ショーメ", "しょーめ", "chaumet"],
+  "CHOPARD": ["ショパール", "しょぱーる", "chopard"],
+  "CHRONOSWISS": ["クロノスイス", "くろのすいす", "chronoswiss"],
+  "CITIZEN": ["シチズン", "しちずん", "citizen"],
+  "CONCORD": ["コンコルド", "こんこるど", "concord"],
+  "CORUM": ["コルム", "こるむ", "corum"],
+  "DANIEL ROTH": ["ダニエルロート", "だにえるろーと", "daniel roth"],
+  "DUBEY & SCHALDENBRAND": ["ダービーシャルデンブラン", "だーびー", "dubey"],
+  "EBEL": ["エベル", "えべる", "ebel"],
+  "EBERHARD": ["エベラール", "えべらーる", "eberhard"],
+  "EPOS": ["エポス", "えぽす", "epos"],
+  "ETERNA": ["エテルナ", "えてるな", "eterna"],
+  "FORTIS": ["フォルティス", "ふぉるてぃす", "fortis"],
+  "FRANCK MULLER": ["フランクミュラー", "ふらんくみゅらー", "franck", "muller", "フランク"],
+  "FREDERIQUE CONSTANT": ["フレデリックコンスタント", "ふれでりっく", "fc"],
+  "GaGa MILANO": ["ガガミラノ", "ががみらの", "gaga"],
+  "GERALD GENTA": ["ジェラルドジェンタ", "じぇらるど", "genta"],
+  "GIRARD PERREGAUX": ["ジラールペルゴ", "じらーるぺるご", "gp", "girard"],
+  "GRAHAM": ["グラハム", "ぐらはむ", "graham"],
+  "HAMILTON": ["ハミルトン", "はみるとん", "hamilton"],
+  "HARRY WINSTON": ["ハリーウィンストン", "はりーうぃんすとん", "hw", "winston"],
+  "HUBLOT": ["ウブロ", "うぶろ", "hublot"],
+  "IWC": ["アイダブリューシー", "あいだぶ", "iwc"],
+  "Jacob & Co": ["ジェイコブ", "じぇいこぶ", "jacob"],
+  "JAEGER LECOULTRE": ["ジャガールクルト", "じゃがーるくると", "jlc", "ジャガー"],
+  "JEANRICHARD": ["ジャンリシャール", "じゃんりしゃーる", "jeanrichard"],
+  "JUNGHANS": ["ユンハンス", "ゆんはんす", "junghans"],
+  "LINDE WERDELIN": ["リンデヴェルデリン", "りんでゔぇるでりん", "linde"],
+  "LONGINES": ["ロンジン", "ろんじん", "longines"],
+  "MAURICE LACROIX": ["モーリスラクロア", "もーりすらくろあ", "maurice"],
+  "MONTBLANC": ["モンブラン", "もんぶらん", "montblanc"],
+  "MOVADO": ["モバード", "もばーど", "movado"],
+  "MUHLE GLASHUTTE": ["ミューレグラスヒュッテ", "みゅーれ", "muhle"],
+  "NOMOS": ["ノモス", "のもす", "nomos"],
+  "NOSTARUS": ["ノスタラス", "のすたらす"],
+  "NUBEO": ["ヌベオ", "ぬべお", "nubeo"],
+  "OFFICINE PANERAI": ["パネライ", "ぱねらい", "panerai", "オフィチーネ"],
+  "OMEGA": ["オメガ", "おめが", "omega"],
+  "ORIENT STAR": ["オリエントスター", "おりえんとすたー", "orient"],
+  "ORIS": ["オリス", "おりす", "oris"],
+  "PATEK PHILIPPE": ["パテックフィリップ", "ぱてっくふぃりっぷ", "patek", "pp", "パテック"],
+  "PEQUIGNET": ["ペキネ", "ぺきね", "pequignet"],
+  "PERRELET": ["ペルレ", "ぺるれ", "perrelet"],
+  "PIAGET": ["ピアジェ", "ぴあじぇ", "piaget"],
+  "PILIPPE CHARRIOL": ["シャリオール", "しゃりおーる", "charriol"],
+  "PORSCHE DESIGN": ["ポルシェデザイン", "ぽるしぇ", "porsche"],
+  "RADO": ["ラドー", "らどー", "rado"],
+  "REVUE THOMMEN": ["レビュートーメン", "れびゅーとーめん", "thommen"],
+  "ROGER DUBUIS": ["ロジェデュブイ", "ろじぇでゅぶい", "roger dubuis"],
+  "ROLEX": ["ロレックス", "ろれっくす", "rolex", "ロレ"],
+  "SARCAR": ["サーカー", "さーかー", "sarcar"],
+  "SEIKO": ["セイコー", "せいこー", "seiko"],
+  "SINN": ["ジン", "じん", "sinn"],
+  "TABBAH": ["タバー", "たばー", "tabbah"],
+  "TAG HEUER": ["タグホイヤー", "たぐほいやー", "tag heuer", "タグ", "ホイヤー"],
+  "TIFFANY": ["ティファニー", "てぃふぁにー", "tiffany"],
+  "TUDOR": ["チュードル", "ちゅーどる", "tudor"],
+  "TUTIMA": ["チュチマ", "ちゅちま", "tutima"],
+  "ULYSSE NARDIN": ["ユリスナルダン", "ゆりすなるだん", "ulysse", "un"],
+  "VACHERON CONSTANTIN": ["ヴァシュロンコンスタンタン", "ゔぁしゅろん", "vc", "vacheron", "ヴァシュロン"],
+  "VAN CLEEF & ARPELS": ["ヴァンクリーフアーペル", "ゔぁんくりーふ", "van cleef", "vc&a", "ヴァンクリ"],
+  "VULCAIN": ["ヴァルカン", "ゔぁるかん", "vulcain"],
+  "WALTHAM": ["ウォルサム", "うぉるさむ", "waltham"],
+  "ZENITH": ["ゼニス", "ぜにす", "zenith"],
+  "ZENO": ["ゼノ", "ぜの", "zeno"],
+  "ZODIAC": ["ゾディアック", "ぞでぃあっく", "zodiac"],
+};
+
+// 総ブランド数: 313
+
+
+const BRANDS = {
+  アパレル: ["1 piu 1 uguale 3","A BATHING APE","A.P.C","ACNE STUDIOS","ACRONYM","ADIDAS","ADIDAS BY STELLA MCCARTNEY","AIGLE","ALEXANDER McQUEEN","Alexander Wang","AMI PARIS","ANNA MOLINARI","AQUASCUTUM","ARCTERYX","ARMANI COLLEZIONI","ARMANI EXCHANGE","ARMANI JEANS","AURALEE","AVIREX","BALENCIAGA","BALLANTYNE","BALLY","BANANA REPUBLIC","BARACUTA","BARBOUR","BATONER","BEAMS","BEAUTIFUL PEOPLE","BELVEST","Berluti","BLACK FLEECE","BLACK LABEL CRESTBRI","BORSALINO","BOTTEGA VENETA","BRIONI","BROOKS BROTHERS","BRUNELLO CUCINELLI","BRUNO MAGLI","BURBERRY","BVLGARI","C.DIOR","C.P COMPANY","CALVIN KLEIN","CANADA GOOSE","CARTIER","CARUSO","CARVEN","CELINE","CESARE ATTOLINI","CHANEL","Chloe","Christian Dior","Christian Louboutin","CHROME HEARTS","CINQUANTA","COACH","COLUMBIA","COMME des GARCONS","COMOLI","CORNELIANI","CRUCIANI","D&G","DANTON","DE PETRILLO","DESCENTE","DIANE von FURSTENBERG","DIESEL","Dior HOMME","DISCOVERED","DOLCE&GABBANA","DOUBLE RL","DRIS VAN NOTEN","DRUMOHR","DSQUARED2","DUNHILL","DUVETICA","EMILIO PUCCI","EMMETI","EMPORIO ARMANI","ENGINEERED GARMENTS","ERMANNO SCERVINO","ERMENEGILDO ZEGNA","ESCADA","ETRO","EVISU","EYE JUNYA WATANABE","F.C.R.B","FENDI","FOXEY","FOXEY BOUTIQUE","FOXEY NEWYORK","FRED PERRY","FURLA","Giorgio Armani","GIVENCHY","GLOVERALL","GOYARD","GRAN SASSO","GUCCI","HELMUT LANG","HERMES","HERNO","HUGO BOSS","HUMAN MADE","HYKE","HYSTERIC GLAMOUR","INCOTEX","ISAIA","ISSEY MIYAKE","ISSEY MIYAKE HOME PLISSE","J.W.ANDERSON","J&M Davidson","JIL SANDER","JOHN SMEDLEY","JOHNLAWRENCESULLIVAN","JUNYA WATANABE MAN","Karl Lagerfeld","kate spade","KENZO","KIRED","KITON","KITSUNE","KRIS VAN ASSCHE","LACOSTE","LAD MUSICIAN","LANVIN","LARDINI","LAVENHAM","LEMAIRE","LEONARD","LEWIS LEATHERS","LOEWE","Loro Piana","LOUIS VUITTON","lucien pellat-finet","MACKINTOSH","MAISON KITSUNE","Maison Margiela","MAMMUT","MARC JACOBS","MARIHA","MARIMEKKO","MARNI","Max Mara","MCQ","MICHAEL KORS","MIHARA YASUHIRO","MIU MIU","MM6","MONCLER","MOORER","MOOSE KNUCKLES","MOSCHINO","MSGM","N.HOOLYWOOD","N°21","NEEDLES","NEIGHBORHOOD","Neil Barrett","NONNATIVE","NUMBER (N)INE","OAMC","Off-White","PATAGONIA","Paul Smith","PENTAX","PLAY GARCONS","POLO RALPH LAUREN","PRADA","PT01","PYRENEX","R.H VINTAGE","RAF SIMONS","RAG&BONE","RALPH LAUREN","READYMADE","RHC","Rick owens","ROBERTO CAVALLI","ROBERTO COLLINA","Sacai","SAINT LAURENT","SAINT MICHAEL","Salvatore Ferragamo","SARTORIO","SCHOTT","SLOANE","SOPHNET","sovereign","Stella McCartney","STILE LATINO NAPOLI","SUPREME","T BY ALEXANDER WANG","TAGLIATORE","TATRAS","THE NORTH FACE","THOM BROWNE","Tiffany","TOM FORD","TOMORROW LAND","TORY BURCH","TRUSSARDI","UNDERCOVER","UNIFORM EXPERIMENT","UNITED ARROWS","VALENTINO","VERSACE","VETEMENTS","WACKO MARIA","WOOL RICH","WTAPS","Y's","Yohji Yamamoto","YSL","ZANONE"],
+  バッグ: ["ANTEPRIMA","BALENCIAGA","BALLY","BOTTEGA VENETA","BURBERRY","BVLGARI","C.DIOR","CARTIER","CELINE","CHANEL","DELVAUX","FENDI","GOYARD","GUCCI","HERMES","LOEWE","LOUIS VUITTON","MCM","PRADA","PRIMA CLASSE","SAINT LAURENT","Salvatore Ferragamo","Maison Margiela","TOD'S","J & M Davidson","kate spade","Tiffany","VERSACE","GIVENCHY","ETRO","ISSEY MIYAKE","MORABITO","MIU MIU","Stella McCartney","Berluti","MICHAEL KORS","VALENTINO","FURLA","Chloe","A.D.M.J","ALEXANDER McQUEEN","Alexander Wang","ANYA HINDMARCH","Christian Louboutin","CHROME HEARTS","COLE HAAN","COCOMEISTER","DOLCE&GABBANA","DUNHILL","EMILIO PUCCI","EMPORIO ARMANI","GERARDINNI","Giorgio Armani","GLOBE TROTTER","JIL SANDER","MARC JACOBS","MARNI","MONCLER","MOSCHINO","MULBERRY","Off-White","PORTER","TUMI","RALPH LAUREN","RIMOWA","SAMANTHA","THOM BROWNE","TOM FORD","TORY BURCH","VALEXTRA","CANADA GOOSE","TATRAS","COACH","THE ROW","HIGH CLASS"],
+  時計: ["A.LANGE & SOHNE","ALAIN SILBERSTEIN","ALPINA","AQUANAUTIC","AUDEMARS PIGUET","BALL WATCH","BAUME & MERCIER","BEDAT & Co","BELL & ROSS","BLANCPAIN","BREGUET","BREITLING","BULOVA","BVLGARI","C.Dior","Carrere y Carrera","CARTIER","CASIO","CHANEL","CHAUMET","CHOPARD","CHRONOSWISS","CITIZEN","CONCORD","CORUM","DANIEL ROTH","DUBEY & SCHALDENBRAND","DUNHILL","EBEL","EBERHARD","EPOS","ETERNA","FENDI","FORTIS","FRANCK MULLER","FREDERIQUE CONSTANT","GaGa MILANO","GERALD GENTA","GIRARD PERREGAUX","GRAHAM","GUCCI","HAMILTON","HARRY WINSTON","HERMES","HUBLOT","IWC","Jacob & Co","JAEGER LECOULTRE","JEANRICHARD","JUNGHANS","LINDE WERDELIN","LONGINES","LOUIS VUITTON","MAURICE LACROIX","MONTBLANC","MOVADO","MUHLE GLASHUTTE","NOMOS","NOSTARUS","NUBEO","OFFICINE PANERAI","OMEGA","ORIENT STAR","ORIS","PATEK PHILIPPE","PEQUIGNET","PERRELET","PIAGET","PILIPPE CHARRIOL","PORSCHE DESIGN","RADO","REVUE THOMMEN","ROGER DUBUIS","ROLEX","SARCAR","SEIKO","SINN","TABBAH","TAG HEUER","TIFFANY","TUDOR","TUTIMA","ULYSSE NARDIN","VACHERON CONSTANTIN","VAN CLEEF & ARPELS","VULCAIN","WALTHAM","ZENITH","ZENO","ZODIAC"],
+  ブランドジュエリー: [], NBジュエリー: [], ブランドアクセサリー: []
+};
+
+let db = JSON.parse(localStorage.getItem('kaitori_v2') || '[]');
+const charts = {};
+
+function fmtPrice(el) {
+  const raw = el.value.replace(/[^0-9]/g, '');
+  if (!raw) { el.value = ''; return; }
+  el.value = parseInt(raw).toLocaleString();
+}
+
+function saveDB() { localStorage.setItem('kaitori_v2', JSON.stringify(db)); }
+function today() { return new Date().toISOString().slice(0,10); }
+
+document.getElementById('reg-date').value = today();
+
+function showPage(p) {
+  ['reg','search','hist'].forEach(id => {
+    document.getElementById('page-'+id).classList.toggle('active', id===p);
+    document.getElementById('nav-'+id).classList.toggle('active', id===p);
+  });
+  if(p==='search') search();
+  if(p==='hist') renderHist();
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+function updateBrands() {}
+
+function allBrandsForCat(cat) {
+  const base = BRANDS[cat] || [];
+  const custom = db.filter(e => !cat || e.category === cat).map(e => e.brand);
+  return [...new Set([...base, ...custom])].sort();
+}
+
+function searchBrandByAlias(q, cat) {
+  const upper = q.toUpperCase();
+  const hiragana = q;
+  const allBrands = allBrandsForCat(cat);
+  const matched = new Set();
+  // 通常のブランド名マッチ
+  allBrands.forEach(b => {
+    if (b.toUpperCase().includes(upper)) matched.add(b);
+  });
+  // エイリアスマッチ
+  Object.entries(BRAND_ALIASES).forEach(([brand, aliases]) => {
+    if (!cat || allBrandsForCat(cat).includes(brand) || cat === '') {
+      const hit = aliases.some(a => a.toUpperCase().includes(upper) || a.includes(hiragana));
+      if (hit) matched.add(brand);
+    }
+  });
+  return [...matched].slice(0, 10);
+}
+
+function suggestBrand() {
+  const q = document.getElementById('reg-brand').value.trim();
+  const cat = document.getElementById('reg-cat').value;
+  const drop = document.getElementById('brand-drop');
+  if (!q) { drop.style.display = 'none'; return; }
+  const list = searchBrandByAlias(q, cat);
+  const exactMatch = list.map(b => b.toUpperCase()).includes(q.toUpperCase());
+  const html = list.map(b => `<div class="suggest-item" ontouchend="pickBrand('${esc(b)}')" onclick="pickBrand('${esc(b)}')">${b}</div>`).join('');
+  const addNew = (!exactMatch && q.length > 1) ? `<div class="suggest-item suggest-new" ontouchend="pickBrand('${esc(q)}')" onclick="pickBrand('${esc(q)}')">＋「${q}」を新規登録</div>` : '';
+  drop.innerHTML = html + addNew;
+  drop.style.display = list.length || addNew ? 'block' : 'none';
+}
+
+function pickBrand(b) {
+  document.getElementById('reg-brand').value = b;
+  document.getElementById('brand-drop').style.display = 'none';
+  suggestModel();
+}
+
+function suggestModel() {
+  const q = document.getElementById('reg-model').value.trim().toUpperCase();
+  const brand = document.getElementById('reg-brand').value.trim();
+  const drop = document.getElementById('model-drop');
+  const models = [...new Set(db.filter(e => e.brand === brand).map(e => e.model))].sort();
+  const filtered = q ? models.filter(m => m.toUpperCase().includes(q)) : models;
+  if (!filtered.length) { drop.style.display = 'none'; return; }
+  drop.innerHTML = filtered.map(m => `<div class="suggest-item" ontouchend="pickModel('${esc(m)}')" onclick="pickModel('${esc(m)}')">${m}</div>`).join('');
+  drop.style.display = 'block';
+}
+
+function pickModel(m) {
+  document.getElementById('reg-model').value = m;
+  document.getElementById('model-drop').style.display = 'none';
+}
+
+function esc(s) { return s.replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
+
+let currentImageData = null;
+
+function handleImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    // 画像をリサイズして容量削減
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > h && w > MAX) { h = h * MAX / w; w = MAX; }
+      else if (h > MAX) { w = w * MAX / h; h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      currentImageData = canvas.toDataURL('image/jpeg', 0.75);
+      document.getElementById('img-preview').src = currentImageData;
+      document.getElementById('img-preview-wrap').style.display = 'block';
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function clearImage() {
+  currentImageData = null;
+  document.getElementById('img-preview-wrap').style.display = 'none';
+  document.getElementById('img-preview').src = '';
+}
+
+function register() {
+  const cat = document.getElementById('reg-cat').value;
+  const brand = document.getElementById('reg-brand').value.trim();
+  const model = document.getElementById('reg-model').value.trim();
+  const date = document.getElementById('reg-date').value;
+  const pAB = parseInt(document.getElementById('p-AB').value.replace(/,/g,'')) || null;
+  const pB = parseInt(document.getElementById('p-B').value.replace(/,/g,'')) || null;
+  const pD = parseInt(document.getElementById('p-D').value.replace(/,/g,'')) || null;
+  const size = document.getElementById('reg-size').value.trim();
+  const color = document.getElementById('reg-color').value.trim();
+  const line = document.getElementById('reg-line').value.trim();
+  const memo = document.getElementById('reg-memo').value.trim();
+  if (!cat) { toast('カテゴリーを選択してください'); return; }
+  if (!brand) { toast('ブランドを入力してください'); return; }
+  if (!model) { toast('モデル名を入力してください'); return; }
+  if (!pAB && !pB && !pD) { toast('金額を1つ以上入力してください'); return; }
+  db.push({ id: Date.now(), category: cat, brand, model, date, pAB, pB, pD, size, color, line, memo, image: currentImageData });
+  saveDB();
+  toast('登録しました！');
+  ['reg-cat','reg-brand','reg-model','p-AB','p-B','p-D','reg-size','reg-color','reg-line','reg-memo'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('reg-date').value = today();
+  clearImage();
+  document.getElementById('reg-cat').focus();
+}
+
+function search() {
+  const q = document.getElementById('s-q').value.trim().toUpperCase();
+  const cat = document.getElementById('s-cat').value;
+  const rank = document.getElementById('s-rank').value;
+  const out = document.getElementById('search-out');
+  let rows = db;
+  if (cat) rows = rows.filter(e => e.category === cat);
+  if (q) {
+    const qUpper = q.toUpperCase();
+    const matchedBrands = new Set();
+    Object.entries(BRAND_ALIASES).forEach(([brand, aliases]) => {
+      if (brand.toUpperCase().includes(qUpper) || aliases.some(a => a.toUpperCase().includes(qUpper) || a.includes(document.getElementById('s-q').value.trim()))) {
+        matchedBrands.add(brand.toUpperCase());
+      }
+    });
+    rows = rows.filter(e => 
+      (e.brand + e.model).toUpperCase().includes(qUpper) ||
+      matchedBrands.has(e.brand.toUpperCase())
+    );
+  }
+  if (rank) rows = rows.filter(e => e['p'+rank] != null);
+  if (!rows.length) {
+    out.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div>${q||cat ? '該当データなし' : 'モデル名やブランド名を入力してください'}</div>`;
+    return;
+  }
+  const groups = {};
+  rows.forEach(e => {
+    const k = e.brand + '__' + e.model;
+    if (!groups[k]) groups[k] = { brand: e.brand, model: e.model, category: e.category, entries: [] };
+    groups[k].entries.push(e);
+  });
+  out.innerHTML = Object.entries(groups).map(([k, g]) => buildCard(g, k)).join('');
+  Object.entries(groups).forEach(([k, g]) => drawChart(k, g.entries));
+}
+
+function buildCard(g, key) {
+  const cid = 'c_' + key.replace(/[^a-zA-Z0-9]/g,'_');
+  const ranks = ['AB','B','D'];
+  const colors = { AB: 'var(--rank-ab)', B: 'var(--rank-b)', D: 'var(--rank-d)' };
+  const priceCells = ranks.map(r => {
+    const rEntries = g.entries.filter(e => e['p'+r] != null).sort((a,b) => b.date.localeCompare(a.date));
+    if (!rEntries.length) return `<div class="price-cell"><div class="price-rank" style="color:${colors[r]}">ランク ${r}</div><div class="price-val" style="color:var(--text3)">—</div></div>`;
+    const latest = rEntries[0];
+    const min = Math.min(...rEntries.map(e => e['p'+r]));
+    return `<div class="price-cell">
+      <div class="price-rank" style="color:${colors[r]}">ランク ${r}</div>
+      <div class="price-val" style="color:${colors[r]}">${latest['p'+r].toLocaleString()}</div>
+      <div class="price-date">${latest.date}</div>
+      <div class="price-min">最低 ${min.toLocaleString()}円</div>
+    </div>`;
+  }).join('');
+
+  // 画像（最新のものを表示）
+  const latestImg = g.entries.filter(e => e.image).sort((a,b) => b.date.localeCompare(a.date))[0];
+  const imgHtml = latestImg ? `<img src="${latestImg.image}" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:12px;border:0.5px solid var(--border)">` : '';
+
+  // サイズ・色・ライン（登録済みのものを集約表示）
+  const sizes = [...new Set(g.entries.map(e => e.size).filter(Boolean))];
+  const colors2 = [...new Set(g.entries.map(e => e.color).filter(Boolean))];
+  const lines = [...new Set(g.entries.map(e => e.line).filter(Boolean))];
+  const tagsHtml = (sizes.length || colors2.length || lines.length) ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+    ${sizes.map(s => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">📐 ${s}</span>`).join('')}
+    ${colors2.map(c => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">🎨 ${c}</span>`).join('')}
+    ${lines.map(l => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">✦ ${l}</span>`).join('')}
+  </div>` : '';
+
+  const latestMemo = g.entries.filter(e => e.memo).sort((a,b) => b.date.localeCompare(a.date))[0];
+  const memoHtml = latestMemo ? `<div class="memo-box">📝 ${latestMemo.memo}</div>` : '';
+
+  return `<div class="result-card">
+    <div class="result-brand">${g.brand} · ${g.category}</div>
+    <div class="result-model">${g.model}</div>
+    ${imgHtml}
+    ${tagsHtml}
+    <div class="price-row">${priceCells}</div>
+    <div class="chart-wrap"><canvas id="${cid}"></canvas></div>
+    ${memoHtml}
+  </div>`;
+}
+
+function drawChart(key, entries) {
+  const cid = 'c_' + key.replace(/[^a-zA-Z0-9]/g,'_');
+  const canvas = document.getElementById(cid);
+  if (!canvas) return;
+  if (charts[cid]) { charts[cid].destroy(); }
+  const sorted = [...entries].sort((a,b) => a.date.localeCompare(b.date));
+  const labels = [...new Set(sorted.map(e => e.date))];
+  const line = (r) => labels.map(d => {
+    const es = sorted.filter(e => e.date === d && e['p'+r] != null);
+    return es.length ? es[es.length-1]['p'+r] : null;
+  });
+  const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const tickColor = isDark ? '#666' : '#999';
+  charts[cid] = new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'AB', data: line('AB'), borderColor:'#185FA5', backgroundColor:'rgba(24,95,165,0.08)', tension:0.3, spanGaps:true, pointRadius:4, borderWidth:2 },
+        { label:'B',  data: line('B'),  borderColor:'#0F6E56', backgroundColor:'rgba(15,110,86,0.08)',  tension:0.3, spanGaps:true, pointRadius:4, borderWidth:2 },
+        { label:'D',  data: line('D'),  borderColor:'#8B3A1A', backgroundColor:'rgba(139,58,26,0.08)', tension:0.3, spanGaps:true, pointRadius:4, borderWidth:2 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { labels: { font: { size: 11 }, boxWidth: 12, color: tickColor } } },
+      scales: {
+        y: { ticks: { callback: v => v != null ? v.toLocaleString() : '', font: { size: 10 }, color: tickColor }, grid: { color: gridColor } },
+        x: { ticks: { font: { size: 10 }, color: tickColor }, grid: { display: false } }
+      }
+    }
+  });
+}
+
+function renderHist() {
+  const el = document.getElementById('hist-out');
+  if (!db.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📋</div>まだ登録がありません</div>'; return; }
+  const sorted = [...db].sort((a,b) => b.date.localeCompare(a.date));
+  el.innerHTML = sorted.slice(0, 100).map(e => {
+    const prices = ['AB','B','D'].map(r => e['p'+r] ? `${r}:${e['p'+r].toLocaleString()}` : null).filter(Boolean).join(' / ');
+    const tags = [e.size, e.color, e.line].filter(Boolean).join(' · ');
+    const imgHtml = e.image ? `<img src="${e.image}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:0.5px solid var(--border);flex-shrink:0;margin-left:8px">` : '';
+    return `<div class="hist-item">
+      <div class="hist-left">
+        <div class="hist-brand">${e.brand} · ${e.category}</div>
+        <div class="hist-model">${e.model}</div>
+        <div class="hist-meta">${e.date} &nbsp; ${prices}円${tags ? ' · ' + tags : ''}</div>
+      </div>
+      ${imgHtml}
+      <button class="hist-del" onclick="delEntry(${e.id})">削除</button>
+    </div>`;
+  }).join('');
+}
+
+function delEntry(id) {
+  db = db.filter(e => e.id !== id);
+  saveDB();
+  renderHist();
+  toast('削除しました');
+}
+
+function clearAll() {
+  if (!confirm('全データを削除しますか？')) return;
+  db = []; saveDB(); renderHist(); toast('全削除しました');
+}
+
+document.addEventListener('touchstart', e => {
+  if (!e.target.closest('.input-wrap')) {
+    document.querySelectorAll('.suggest-drop').forEach(d => d.style.display = 'none');
+  }
+}, { passive: true });
+
+document.addEventListener('click', e => {
+  if (!e.target.closest('.input-wrap')) {
+    document.querySelectorAll('.suggest-drop').forEach(d => d.style.display = 'none');
+  }
+});
+</script>
+</body>
+</html>
