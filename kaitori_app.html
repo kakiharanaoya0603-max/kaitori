@@ -296,6 +296,87 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- 編集モーダル -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-start;justify-content:center;padding:20px 0;overflow-y:auto">
+  <div style="background:var(--bg);width:100%;max-width:520px;border-radius:var(--radius);padding:20px;margin:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:18px;font-weight:600">データを編集</div>
+      <button onclick="closeEditModal()" style="background:transparent;border:none;font-size:24px;cursor:pointer;color:var(--text2)">×</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label class="form-label">カテゴリー</label>
+      <select class="form-control" id="edit-cat">
+        <option>アパレル</option><option>バッグ</option><option>時計</option>
+        <option>ブランドジュエリー</option><option>NBジュエリー</option><option>ブランドアクセサリー</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">ブランド</label>
+      <input class="form-control" id="edit-brand" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">モデル名</label>
+      <input class="form-control" id="edit-model" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">日付</label>
+      <input class="form-control" id="edit-date" type="date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">買取金額（円）</label>
+      <div class="rank-row">
+        <div class="rank-block">
+          <div class="rank-name ab">AB</div>
+          <input class="rank-input" id="edit-pAB" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)">
+          <div class="rank-unit">円</div>
+        </div>
+        <div class="rank-block">
+          <div class="rank-name b">B</div>
+          <input class="rank-input" id="edit-pB" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)">
+          <div class="rank-unit">円</div>
+        </div>
+        <div class="rank-block">
+          <div class="rank-name d">D</div>
+          <input class="rank-input" id="edit-pD" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)">
+          <div class="rank-unit">円</div>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><label class="form-label">サイズ</label><input class="form-control" id="edit-size" type="text"></div>
+        <div><label class="form-label">色</label><input class="form-control" id="edit-color" type="text"></div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">ライン名</label>
+      <input class="form-control" id="edit-line" type="text">
+    </div>
+    <div class="form-group">
+      <label class="form-label">写真</label>
+      <div id="edit-img-preview-wrap" style="display:none;margin-bottom:10px;position:relative">
+        <img id="edit-img-preview" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--radius-sm);border:0.5px solid var(--border)">
+        <button onclick="clearEditImage()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn" style="background:var(--surface2);color:var(--text);border:0.5px solid var(--border2);padding:12px;font-size:14px" onclick="document.getElementById('edit-img-camera').click()">📷 カメラ</button>
+        <button class="btn" style="background:var(--surface2);color:var(--text);border:0.5px solid var(--border2);padding:12px;font-size:14px" onclick="document.getElementById('edit-img-gallery').click()">🖼️ ロール</button>
+      </div>
+      <input type="file" id="edit-img-camera" accept="image/*" capture="environment" style="display:none" onchange="handleEditImage(this)">
+      <input type="file" id="edit-img-gallery" accept="image/*" style="display:none" onchange="handleEditImage(this)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">メモ</label>
+      <textarea class="form-control" id="edit-memo"></textarea>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px">
+      <button class="btn" style="background:var(--surface2);color:var(--text);border:0.5px solid var(--border2)" onclick="closeEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
 <script>
 const BRAND_ALIASES = {
   "1 piu 1 uguale 3": ["ウノピュウノウグァーレトレ", "うのぴゅ", "1piu", "uno"],
@@ -901,15 +982,110 @@ function renderHist() {
     const tags = [e.size, e.color, e.line].filter(Boolean).join(' · ');
     const imgHtml = e.image ? `<img src="${e.image}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:0.5px solid var(--border);flex-shrink:0;margin-left:8px">` : '';
     return `<div class="hist-item">
-      <div class="hist-left">
+      <div class="hist-left" onclick="editEntry(${e.id})" style="cursor:pointer">
         <div class="hist-brand">${e.brand} · ${e.category}</div>
         <div class="hist-model">${e.model}</div>
         <div class="hist-meta">${e.date} &nbsp; ${prices}円${tags ? ' · ' + tags : ''}</div>
       </div>
       ${imgHtml}
-      <button class="hist-del" onclick="delEntry(${e.id})">削除</button>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px">
+        <button class="hist-del" onclick="editEntry(${e.id})" style="color:var(--rank-ab)">編集</button>
+        <button class="hist-del" onclick="delEntry(${e.id})">削除</button>
+      </div>
     </div>`;
   }).join('');
+}
+
+function editEntry(id) {
+  const e = db.find(x => x.id === id);
+  if (!e) return;
+  const modal = document.getElementById('edit-modal');
+  document.getElementById('edit-id').value = e.id;
+  document.getElementById('edit-cat').value = e.category || '';
+  document.getElementById('edit-brand').value = e.brand || '';
+  document.getElementById('edit-model').value = e.model || '';
+  document.getElementById('edit-date').value = e.date || today();
+  document.getElementById('edit-pAB').value = e.pAB ? e.pAB.toLocaleString() : '';
+  document.getElementById('edit-pB').value = e.pB ? e.pB.toLocaleString() : '';
+  document.getElementById('edit-pD').value = e.pD ? e.pD.toLocaleString() : '';
+  document.getElementById('edit-size').value = e.size || '';
+  document.getElementById('edit-color').value = e.color || '';
+  document.getElementById('edit-line').value = e.line || '';
+  document.getElementById('edit-memo').value = e.memo || '';
+  const imgPrev = document.getElementById('edit-img-preview');
+  const imgWrap = document.getElementById('edit-img-preview-wrap');
+  if (e.image) {
+    imgPrev.src = e.image;
+    imgWrap.style.display = 'block';
+    imgPrev.dataset.image = e.image;
+  } else {
+    imgWrap.style.display = 'none';
+    imgPrev.dataset.image = '';
+  }
+  modal.style.display = 'flex';
+}
+
+function closeEditModal() {
+  document.getElementById('edit-modal').style.display = 'none';
+}
+
+function saveEdit() {
+  const id = parseInt(document.getElementById('edit-id').value);
+  const idx = db.findIndex(x => x.id === id);
+  if (idx < 0) return;
+  const brand = document.getElementById('edit-brand').value.trim();
+  const model = document.getElementById('edit-model').value.trim();
+  if (!brand || !model) { toast('ブランドとモデル名は必須です'); return; }
+  db[idx] = {
+    ...db[idx],
+    category: document.getElementById('edit-cat').value,
+    brand,
+    model,
+    date: document.getElementById('edit-date').value,
+    pAB: parseInt(document.getElementById('edit-pAB').value.replace(/,/g,'')) || null,
+    pB: parseInt(document.getElementById('edit-pB').value.replace(/,/g,'')) || null,
+    pD: parseInt(document.getElementById('edit-pD').value.replace(/,/g,'')) || null,
+    size: document.getElementById('edit-size').value.trim(),
+    color: document.getElementById('edit-color').value.trim(),
+    line: document.getElementById('edit-line').value.trim(),
+    memo: document.getElementById('edit-memo').value.trim(),
+    image: document.getElementById('edit-img-preview').dataset.image || null,
+  };
+  saveDB();
+  renderHist();
+  closeEditModal();
+  toast('更新しました');
+}
+
+function handleEditImage(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const MAX = 800;
+      let w = img.width, h = img.height;
+      if (w > h && w > MAX) { h = h * MAX / w; w = MAX; }
+      else if (h > MAX) { w = w * MAX / h; h = MAX; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const data = canvas.toDataURL('image/jpeg', 0.75);
+      const prev = document.getElementById('edit-img-preview');
+      prev.src = data;
+      prev.dataset.image = data;
+      document.getElementById('edit-img-preview-wrap').style.display = 'block';
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+function clearEditImage() {
+  document.getElementById('edit-img-preview').dataset.image = '';
+  document.getElementById('edit-img-preview-wrap').style.display = 'none';
 }
 
 function delEntry(id) {
