@@ -1,0 +1,1094 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#14120f">
+<title>買取ナレッジ帳</title>
+<style>
+:root{
+  --ink:#14120f; --ink2:#1e1b16; --ink3:#292520; --line:#3a352c;
+  --gold:#c9a227; --gold-soft:#e0c268; --paper:#ece7da; --paper-dim:#a89f8d;
+  --red:#d96b5c; --green:#7fb069; --blue:#6fa3c7; --purple:#a98fc7; --orange:#e0954f; --gray:#8f8a7e;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{background:var(--ink);color:var(--paper);font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.65;min-height:100vh;padding-bottom:90px}
+.serif{font-family:"Hiragino Mincho ProN","Yu Mincho","MS PMincho",serif}
+/* header */
+header{position:sticky;top:0;z-index:50;background:linear-gradient(to bottom,var(--ink) 75%,rgba(20,18,15,.92));backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:10px 14px 8px}
+.h-top{display:flex;align-items:center;gap:10px}
+.h-title{font-size:1.05rem;letter-spacing:.14em;color:var(--gold-soft);font-weight:600;white-space:nowrap}
+.h-title small{color:var(--paper-dim);letter-spacing:.05em;font-size:.62rem;display:block;font-weight:400}
+.h-spacer{flex:1}
+.icon-btn{background:none;border:1px solid var(--line);color:var(--paper-dim);border-radius:8px;padding:6px 10px;font-size:.78rem;cursor:pointer}
+.icon-btn:active{background:var(--ink3)}
+/* search */
+.searchbar{margin-top:8px;display:flex;gap:8px}
+.searchbar input{flex:1;background:var(--ink2);border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:var(--paper);font-size:16px;outline:none}
+.searchbar input:focus{border-color:var(--gold)}
+.searchbar input::placeholder{color:#6d6759}
+/* breadcrumb */
+.crumbs{display:flex;align-items:center;gap:6px;padding:10px 14px 0;font-size:.78rem;color:var(--paper-dim);flex-wrap:wrap}
+.crumbs a{color:var(--gold-soft);text-decoration:none;cursor:pointer}
+.crumbs .sep{color:#5a5548}
+main{padding:12px 14px 20px;max-width:760px;margin:0 auto}
+/* category cards */
+.cat-grid{display:grid;gap:12px;margin-top:6px}
+.cat-card{position:relative;border:1px solid var(--line);border-radius:14px;padding:18px 16px;background:var(--ink2);cursor:pointer;overflow:hidden}
+.cat-card:active{background:var(--ink3)}
+.cat-card .cname{font-size:1.25rem;letter-spacing:.3em;color:var(--paper)}
+.cat-card .cen{font-size:.66rem;letter-spacing:.25em;color:var(--gold);margin-bottom:2px}
+.cat-card .ccount{position:absolute;right:16px;top:50%;transform:translateY(-50%);color:var(--paper-dim);font-size:.75rem;text-align:right}
+.cat-card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gold);opacity:.85}
+/* list items (brand / model) */
+.list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.li{border:1px solid var(--line);border-radius:12px;background:var(--ink2);padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:10px}
+.li:active{background:var(--ink3)}
+.li .nm{font-size:1rem;font-weight:600}
+.li .sub{font-size:.7rem;color:var(--paper-dim);letter-spacing:.08em}
+.li .grow{flex:1;min-width:0}
+.li .cnt{font-size:.72rem;color:var(--paper-dim);white-space:nowrap}
+.li .arrow{color:#5a5548}
+.badge-row{display:flex;gap:4px;margin-top:3px;flex-wrap:wrap}
+/* entry cards */
+.entry{border:1px solid var(--line);border-radius:12px;background:var(--ink2);padding:12px 14px;margin-top:10px;position:relative}
+.entry .e-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
+.entry .e-text{font-size:.9rem;white-space:pre-wrap;word-break:break-word}
+.entry .e-edit{position:absolute;top:8px;right:10px;font-size:.7rem;color:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:2px 8px;cursor:pointer;background:none}
+.tag{display:inline-block;font-size:.66rem;padding:2px 8px;border-radius:999px;border:1px solid;letter-spacing:.05em}
+.tag.month{color:var(--paper-dim);border-color:var(--line)}
+.t-鉄板{color:var(--green);border-color:var(--green)}
+.t-高騰{color:var(--gold-soft);border-color:var(--gold)}
+.t-警戒{color:var(--red);border-color:var(--red)}
+.t-相場{color:var(--blue);border-color:var(--blue)}
+.t-小ネタ{color:var(--purple);border-color:var(--purple)}
+.t-知識{color:var(--gray);border-color:var(--gray)}
+.thumbs{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.thumbs img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);cursor:pointer}
+/* section title */
+.sec{margin-top:18px;display:flex;align-items:baseline;gap:8px}
+.sec .st{font-size:.75rem;letter-spacing:.25em;color:var(--gold)}
+.sec .line{flex:1;height:1px;background:var(--line)}
+/* filter chips */
+.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;font-size:.72rem;padding:4px 12px;border-radius:999px;border:1px solid var(--line);color:var(--paper-dim);background:var(--ink2);cursor:pointer}
+.chip.on{border-color:var(--gold);color:var(--gold-soft)}
+/* fab */
+.fab{position:fixed;right:18px;bottom:22px;z-index:60;background:var(--gold);color:var(--ink);border:none;border-radius:999px;padding:13px 20px;font-size:.9rem;font-weight:700;box-shadow:0 4px 18px rgba(0,0,0,.5);cursor:pointer;letter-spacing:.05em}
+.fab:active{transform:scale(.97)}
+/* modal */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.62);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+@media(min-width:600px){.overlay{align-items:center}}
+.modal{background:var(--ink2);border:1px solid var(--line);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;padding:18px 16px 26px}
+@media(min-width:600px){.modal{border-radius:16px}}
+.modal h3{font-size:.95rem;color:var(--gold-soft);letter-spacing:.1em;margin-bottom:12px}
+.f-label{font-size:.72rem;color:var(--paper-dim);margin:12px 0 4px;letter-spacing:.08em}
+.f-input,.f-textarea,.f-select{width:100%;background:var(--ink);border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--paper);font-size:16px;outline:none;font-family:inherit}
+.f-input:focus,.f-textarea:focus{border-color:var(--gold)}
+.f-textarea{min-height:110px;resize:vertical;line-height:1.6}
+.type-row{display:flex;gap:6px;flex-wrap:wrap}
+.type-opt{font-size:.74rem;padding:5px 12px;border-radius:999px;border:1px solid var(--line);color:var(--paper-dim);cursor:pointer}
+.type-opt.on.t-鉄板{color:var(--green);border-color:var(--green)}
+.type-opt.on.t-高騰{color:var(--gold-soft);border-color:var(--gold)}
+.type-opt.on.t-警戒{color:var(--red);border-color:var(--red)}
+.type-opt.on.t-相場{color:var(--blue);border-color:var(--blue)}
+.type-opt.on.t-小ネタ{color:var(--purple);border-color:var(--purple)}
+.type-opt.on.t-知識{color:var(--gray);border-color:var(--gray)}
+.btn-row{display:flex;gap:10px;margin-top:18px}
+.btn{flex:1;padding:12px;border-radius:10px;border:none;font-size:.9rem;font-weight:700;cursor:pointer;letter-spacing:.05em}
+.btn.primary{background:var(--gold);color:var(--ink)}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--paper-dim)}
+.btn.danger{background:none;border:1px solid var(--red);color:var(--red);flex:0 0 auto;padding:12px 16px}
+/* lightbox */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:200;display:flex;align-items:center;justify-content:center;cursor:zoom-out}
+.lightbox img{max-width:96vw;max-height:92vh;object-fit:contain;border-radius:6px}
+/* search result */
+.sr-path{font-size:.68rem;color:var(--gold);letter-spacing:.05em;margin-bottom:2px}
+.hl{color:var(--gold-soft);font-weight:700}
+.empty{color:var(--paper-dim);font-size:.85rem;text-align:center;padding:40px 10px;line-height:2}
+.note{font-size:.7rem;color:#6d6759;margin-top:6px}
+.img-add{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.img-add .th{position:relative}
+.img-add .th img{width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.img-add .th .rm{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;border:none;border-radius:999px;width:20px;height:20px;font-size:.7rem;cursor:pointer;line-height:1}
+.add-img-btn{width:64px;height:64px;border:1px dashed var(--line);border-radius:8px;background:none;color:var(--paper-dim);font-size:1.3rem;cursor:pointer}
+.menu-list{display:flex;flex-direction:column;gap:8px}
+.menu-list .btn{text-align:left}
+.mlink{color:var(--gold-soft);text-decoration:underline;text-decoration-style:dotted;text-underline-offset:2px;cursor:pointer}
+.pin-btn{background:none;border:1px solid var(--line);color:var(--paper-dim);border-radius:6px;padding:2px 10px;font-size:.72rem;cursor:pointer}
+.pin-btn.on{color:var(--gold-soft);border-color:var(--gold)}
+.pin-section{margin-bottom:4px}
+.pin-item{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--ink2);border-radius:10px;padding:9px 12px;margin-top:8px;cursor:pointer}
+.pin-item .pnm{font-size:.88rem;flex:1;min-width:0}
+.pin-item .ppath{font-size:.64rem;color:var(--paper-dim)}
+.pin-item .unpin{background:none;border:none;color:var(--paper-dim);font-size:.9rem;cursor:pointer;padding:2px 4px}
+.month-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.month-chip{border:1px solid var(--line);background:var(--ink2);color:var(--paper);border-radius:10px;padding:10px 16px;font-size:.85rem;cursor:pointer;letter-spacing:.05em}
+.month-chip:active{background:var(--ink3)}
+.t-説明{color:var(--blue);border-color:var(--blue)}
+.t-後押し{color:var(--green);border-color:var(--green)}
+.t-次回提案{color:var(--purple);border-color:var(--purple)}
+.t-知識{color:var(--gray);border-color:var(--gray)}
+.talk-card{border:1px solid var(--line);border-radius:12px;background:var(--ink2);padding:12px 14px;margin-top:10px;position:relative}
+.talk-card .e-edit{position:absolute;top:8px;right:10px;font-size:.7rem;color:var(--paper-dim);border:1px solid var(--line);border-radius:6px;padding:2px 8px;cursor:pointer;background:none}
+.talk-card .t-head{display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap}
+.talk-card .t-text{font-size:.92rem;line-height:1.7;white-space:pre-wrap}
+.tag.cat{color:var(--paper-dim);border-color:var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <div class="h-top">
+    <div class="h-title serif">買取ナレッジ帳<small>KAITORI KNOWLEDGE</small></div>
+    <div class="h-spacer"></div>
+    <button class="icon-btn" onclick='go({v:"talks"})'>トーク</button>
+    <button class="icon-btn" onclick='go({v:"archive"})'>月別</button>
+    <button class="icon-btn" onclick="openSettings()">設定</button>
+  </div>
+  <div class="searchbar">
+    <input id="searchInput" type="search" placeholder="ブランド・モデル・キーワード検索（かな/カナ/英語OK）" oninput="onSearch(this.value)">
+  </div>
+</header>
+<div class="crumbs" id="crumbs"></div>
+<main id="main"></main>
+<button class="fab" id="fab" onclick="onFab()">＋ 追加</button>
+<div id="modalRoot"></div>
+<div id="lightboxRoot"></div>
+<script>
+/* ============ 初期データ（2026年2月〜6月 TLオークション概況より抽出） ============ */
+const SEED = {version:1, categories:[
+{id:"watch", name:"時計", en:"WATCH", brands:[
+ {id:"w-rolex", name:"ロレックス", en:"ROLEX", kana:"ろれっくす", models:[
+  {id:"w-rolex-daydate", name:"デイデイト", alias:"day date daydate でいでいと 金無垢", entries:[
+   {id:"e1",month:"2026-06",type:"高騰",text:"平均約238万円(4-5月)→約323万円へ急伸。228238Aが825万円で当月最高額。金無垢モデルへの圧倒的需要は健在。",images:[]}]},
+  {id:"w-rolex-datejust", name:"デイトジャスト", alias:"datejust dj でいとじゃすと 16233 1601 16220", entries:[
+   {id:"e2",month:"2026-06",type:"鉄板",text:"Ref.1601：14点出品・平均落札約50万円。同一モデル大量出品でも値崩れなし。",images:[]},
+   {id:"e3",month:"2026-06",type:"知識",text:"ランク別相関：B平均約77万円に対しCは約53万円（約-30%に留まる）。需要の強いモデルは瑕疵の減額が限定的。",images:[]},
+   {id:"e4",month:"2026-05",type:"高騰",text:"コンビ(16233等)が一段と底上げ。3-4月は60〜80万円台中心→5月は良品で80万円台後半〜91万円の落札複数。",images:[]},
+   {id:"e5",month:"2026-04",type:"鉄板",text:"45点成約・平均約61.5万円。Jランク(16220)でも38.3万円。パーツ取り・修復ベース需要で底抜けしない。",images:[]},
+   {id:"e6",month:"2026-03",type:"警戒",text:"不落札20件発生。出品者指値平均約55.2万円。過去の高値を引きずった指値は通らない。一方16233は平均82.3万円・変動係数4.2%と安定感抜群。",images:[]}]},
+  {id:"w-rolex-submariner", name:"サブマリーナ", alias:"submariner サブ 114060 126610 16610LV グリーンサブ", entries:[
+   {id:"e7",month:"2026-06",type:"小ネタ",text:"サブマリーナデイト：Cランク(不動・大瑕疵)でも234万円で落札。スポーツロレックスの底堅さの象徴。",images:[]},
+   {id:"e8",month:"2026-05",type:"相場",text:"114060(旧セラミック・ノンデイト)が131.6万円。生産終了モデルは定価超えプレミア維持。",images:[]},
+   {id:"e9",month:"2026-03",type:"小ネタ",text:"16610LV(グリーンサブ)：BCランクでも161万円超。",images:[]},
+   {id:"e10",month:"2026-02",type:"知識",text:"126610LN：12時位置に目視可能なガラス欠けで210万円→192万円（約-8.5%）。ガラス欠けの減額目安。",images:[]}]},
+  {id:"w-rolex-daytona", name:"コスモグラフ デイトナ", alias:"daytona でいとな 126500", entries:[
+   {id:"e11",month:"2026-06",type:"警戒",text:"指値1,210万円に19件入札も不落札。過去の高値相場を引きずった希望額は成約しない。買取提示は最新相場基準で。",images:[]},
+   {id:"e12",month:"2026-02",type:"相場",text:"126500LN：定価の約2倍を維持。投機だけでなく実保有目的のバイヤーも増加。",images:[]}]},
+  {id:"w-rolex-airking", name:"エアキング", alias:"airking えあきんぐ", entries:[
+   {id:"e13",month:"2026-06",type:"警戒",text:"平均約41万円→約36万円へ下落。明確なネガティブトレンド。",images:[]}]},
+  {id:"w-rolex-gmt", name:"GMTマスターII", alias:"gmt master ペプシ 126710BLRO 16750", entries:[
+   {id:"e14",month:"2026-04",type:"相場",text:"16750(生産終了)が167万円。現行定価に匹敵〜超える水準。",images:[]},
+   {id:"e15",month:"2026-02",type:"相場",text:"126710BLRO：生産終了の噂再燃で中古良品も前月比+5%上昇。",images:[]}]},
+  {id:"w-rolex-exp2", name:"エクスプローラーII", alias:"explorer 1655 えくすぷろーらー", entries:[
+   {id:"e16",month:"2026-05",type:"高騰",text:"Ref.1655が212万円で落札。BC程度でも200万円超え。ヴィンテージ特有ディテールへの熱狂継続。",images:[]}]},
+  {id:"w-rolex-opdate", name:"オイスターパーペチュアルデイト", alias:"1500 34mm oyster perpetual date", entries:[
+   {id:"e17",month:"2026-03",type:"高騰",text:"Ref.1500(34mm)：過去平均26.2万円→38.2万円へ大幅上昇。小径ケース再評価トレンドの代表格。",images:[]}]},
+  {id:"w-rolex-oysterdate", name:"オイスターデイト", alias:"6694 oyster date", entries:[
+   {id:"e18",month:"2026-03",type:"警戒",text:"Ref.6694：過去平均37.9万円→13.3万円へ急落。同じ手巻きでも1500と明暗。文字盤オリジナル性で評価が極端に割れる。",images:[]}]},
+  {id:"w-rolex-spider", name:"スパイダーダイアル（知識）", alias:"spider dial 文字盤ひび割れ", entries:[
+   {id:"e19",month:"2026-02",type:"小ネタ",text:"経年による文字盤ひび割れが「唯一無二の意匠」として希少価値化。通常文字盤より20〜40%高値のケース増。接客トークに◎。",images:[]}]}
+ ]},
+ {id:"w-patek", name:"パテック フィリップ", en:"PATEK PHILIPPE", kana:"ぱてっくふぃりっぷ", models:[
+  {id:"w-patek-calatrava", name:"カラトラバ", alias:"calatrava からとらば", entries:[
+   {id:"e20",month:"2026-06",type:"高騰",text:"平均113万円台→183万円台へ大幅上昇。クラシック回帰・小径トレンドの主役。",images:[]}]},
+  {id:"w-patek-neptune", name:"ネプチューン", alias:"neptune 5080", entries:[
+   {id:"e21",month:"2026-03",type:"高騰",text:"Ref.5080/001に101件の入札殺到、339.5万円で落札(BCランク)。廃盤希少モデルの再評価。当時定価超えのプレミア。",images:[]}]},
+  {id:"w-patek-aquanaut", name:"アクアノート", alias:"aquanaut あくあのーと", entries:[
+   {id:"e22",month:"2026-02",type:"相場",text:"次期モデルのリーク・供給制限の噂で二次流通の引き合い強まる。今後上昇予想。",images:[]}]},
+  {id:"w-patek-mvt", name:"ムーブメント単体", alias:"cal.324 パーツ", entries:[
+   {id:"e23",month:"2026-03",type:"小ネタ",text:"Cal.324単体(ジャンク/パーツ取り)に43件入札、111万〜121万円。パーツ単位でも需要が極めて高い。",images:[]}]},
+  {id:"w-patek-vintage", name:"アンティーク（4175/1等）", alias:"antique", entries:[
+   {id:"e24",month:"2026-04",type:"高騰",text:"型番4175/1に54件の入札が殺到し211.8万円。クラシックドレスへのコレクター需要が激しい。",images:[]}]}
+ ]},
+ {id:"w-cartier", name:"カルティエ", en:"CARTIER", kana:"かるてぃえ", models:[
+  {id:"w-cartier-santos-galbee", name:"サントスガルベ", alias:"santos galbee さんとすがるべ", entries:[
+   {id:"e25",month:"2026-06",type:"高騰",text:"平均48万円台→64万円台へ上昇。80-90年代小ぶりカルティエ需要が急増中。",images:[]}]},
+  {id:"w-cartier-santos-oct", name:"サントスオクタゴン", alias:"santos octagon おくたごん", entries:[
+   {id:"e26",month:"2026-06",type:"小ネタ",text:"状態不良のCランクでも120万円前後の予想以上の高値がつく傾向。持ち込み促進トークに使える。",images:[]}]},
+  {id:"w-cartier-panthere-w", name:"パンテール（時計）", alias:"panthere ぱんてーる", entries:[
+   {id:"e27",month:"2026-06",type:"警戒",text:"時計のパンテールは約89万円→約66万円へ下落。ジュエリーのパンテールは高値継続なので混同注意。",images:[]},
+   {id:"e28",month:"2026-04",type:"小ネタ",text:"Cランクでも30件の入札を集め229万円まで底上げされた例あり。円安・インバウンド需要。",images:[]}]},
+  {id:"w-cartier-musttank", name:"マストタンク", alias:"must tank ますとたんく 5057001 ヴァンドーム", entries:[
+   {id:"e29",month:"2026-05",type:"鉄板",text:"マストタンク/マストヴァンドーム(SV)：毎月多数出品でも文字盤問わず安定入札。良品10万〜25万円で確実に売れる鉄板商材。",images:[]},
+   {id:"e30",month:"2026-03",type:"高騰",text:"Ref.5057001：過去平均15.5万円→21.8万円へ約40%上昇。ヴィンテージカルティエ相場の波。",images:[]}]},
+  {id:"w-cartier-gondolo", name:"ゴンドーロ", alias:"gondolo ごんどーろ", entries:[
+   {id:"e31",month:"2026-04",type:"高騰",text:"46件の入札を集め305.2万円で当月最高額。ヴィンテージカルティエ再評価と市場枯渇。",images:[]}]},
+  {id:"w-cartier-cpcp", name:"CPCP（プリヴェ）", alias:"cpcp collection privee トーチュ プリヴェ paris", entries:[
+   {id:"e32",month:"2026-04",type:"小ネタ",text:"トーチュCPCP：Cランクでも95万円。",images:[]},
+   {id:"e33",month:"2026-02",type:"小ネタ",text:"文字盤に「PARIS」表記のCPCPシリーズは世界的再評価で数年前の3倍以上に高騰。プリヴェ系は定価1.5〜2倍が常態化。",images:[]}]},
+  {id:"w-cartier-tankfr", name:"タンクフランセーズ", alias:"tank francaise たんくふらんせーず", entries:[
+   {id:"e34",month:"2026-02",type:"知識",text:"W51008Q3：不動品は稼働品の約45%の落札額。クォーツの回路不良リスクは市場評価が非常にシビア。査定時は稼働確認必須。",images:[]}]}
+ ]},
+ {id:"w-omega", name:"オメガ", en:"OMEGA", kana:"おめが", models:[
+  {id:"w-omega-seamaster-db", name:"シーマスター ディープブルー", alias:"seamaster deep blue しーますたー", entries:[
+   {id:"e35",month:"2026-06",type:"高騰",text:"44件の入札が殺到し60万円で落札。退色文字盤・レトロ年式のヴィンテージダイバーズ再評価が入札を押し上げ。",images:[]}]},
+  {id:"w-omega-speedmaster", name:"スピードマスター", alias:"speedmaster すぴーどますたー 145.022 DON", entries:[
+   {id:"e36",month:"2026-03",type:"警戒",text:"クロノグラフで不落札6件(指値平均約26.1万円)。指値強気は通らない局面。",images:[]},
+   {id:"e37",month:"2026-02",type:"小ネタ",text:"4th(145.022)：DON(Dot Over 90)ベゼル確認個体に45件入札、欧州バイヤー同士の競り合い。オリジナルパーツ維持率が価格を決める。",images:[]}]},
+  {id:"w-omega-constellation", name:"コンステレーション", alias:"constellation こんすてれーしょん", entries:[
+   {id:"e38",month:"2026-04",type:"鉄板",text:"53点成約・平均約8.6万円で安定吸収。ただしB→Cで約-50%とドレス系は瑕疵減額大。クロノメーター系は下落傾向あり要注意。",images:[]}]},
+  {id:"w-omega-seamaster", name:"シーマスター", alias:"seamaster", entries:[
+   {id:"e39",month:"2026-04",type:"鉄板",text:"36点成約・平均約10.1万円。流通量あっても需要が吸収する優秀商材。",images:[]}]},
+  {id:"w-omega-ghost", name:"ゴーストベゼル（知識）", alias:"ghost bezel 退色", entries:[
+   {id:"e40",month:"2026-02",type:"小ネタ",text:"黒ベゼルが経年でグレー/青に退色したスピマス・シーマスは「枯れ感」が好まれ美品より高額落札の逆転現象。減額しないこと。",images:[]}]}
+ ]},
+ {id:"w-vc", name:"ヴァシュロン・コンスタンタン", en:"VACHERON CONSTANTIN", kana:"う゛ぁしゅろんこんすたんたん ばしゅろん", models:[
+  {id:"w-vc-pc", name:"パーペチュアルカレンダー", alias:"perpetual calendar 永久カレンダー", entries:[
+   {id:"e41",month:"2026-06",type:"高騰",text:"単体で50件の入札を集め407万円台で落札。複雑機構クラシック個体への国内外コレクター需要が強烈。",images:[]}]}
+ ]},
+ {id:"w-ap", name:"オーデマ・ピゲ", en:"AUDEMARS PIGUET", kana:"おーでまぴげ", models:[
+  {id:"w-ap-ro", name:"ロイヤルオーク", alias:"royal oak ろいやるおーく 15500 N2812", entries:[
+   {id:"e42",month:"2026-05",type:"高騰",text:"クオーツSS/YGコンビに当月最多40件の入札、149万円で落札。コンビ再評価の波。",images:[]},
+   {id:"e43",month:"2026-03",type:"小ネタ",text:"N2812：Cランクにも関わらず401.7万円で当月最高額。アイコンモデルの絶対需要。",images:[]},
+   {id:"e44",month:"2026-02",type:"相場",text:"15500ST：昨年末急騰からの調整局面(-3%)。ただし成約率は高く実需は維持。",images:[]}]},
+  {id:"w-ap-cobra", name:"コブラ", alias:"cobra こぶら", entries:[
+   {id:"e45",month:"2026-05",type:"高騰",text:"ダイヤベゼル(750手巻)に31件入札、301万円で当月最高額。ヴィンテージ金無垢×宝飾の需要が急上昇。",images:[]}]}
+ ]},
+ {id:"w-gs", name:"グランドセイコー", en:"GRAND SEIKO", kana:"ぐらんどせいこー GS", models:[
+  {id:"w-gs-hibeat", name:"ハイビート", alias:"hi-beat はいびーと 6146 5645", entries:[
+   {id:"e46",month:"2026-06",type:"警戒",text:"約19万円→約10万円へ下落した月。月ごとの乱高下が激しく、金無垢か・状態で評価が大きく変わる。",images:[]},
+   {id:"e47",month:"2026-05",type:"高騰",text:"5645-5000(18K手巻)に20件入札、90万円。国産ヴィンテージ金無垢へのコレクター需要。",images:[]},
+   {id:"e48",month:"2026-04",type:"高騰",text:"6146-8040：BCランクでも30件入札で63万円。",images:[]}]},
+  {id:"w-gs-44gs", name:"44GS", alias:"4420-9000", entries:[
+   {id:"e49",month:"2026-02",type:"小ネタ",text:"4420-9000に32件入札。外装研磨が少なくエッジが鋭く残る個体に人気集中。亀戸工場製の歴史的背景も評価要素。",images:[]}]},
+  {id:"w-gs-chronometer", name:"クロノメーター", alias:"5722-9990", entries:[
+   {id:"e50",month:"2026-03",type:"相場",text:"5722-9990に22件入札、16.9万円。国産アンティークの国内外需要が底堅い。",images:[]}]},
+  {id:"w-gs-vfa", name:"V.F.A.（知識）", alias:"vfa very fine adjusted", entries:[
+   {id:"e51",month:"2026-02",type:"小ネタ",text:"「V.F.A.」表記のある70年代個体は当時最高精度の証明として、状態問わず100万円超。文字盤表記を必ず確認。",images:[]}]}
+ ]},
+ {id:"w-seiko", name:"セイコー", en:"SEIKO", kana:"せいこー", models:[
+  {id:"w-seiko-credor", name:"クレドール", alias:"credor くれどーる ロコモティブ", entries:[
+   {id:"e52",month:"2026-04",type:"警戒",text:"平均落札単価が前月比-70%以上の下落。一過性ブームが沈静化。過去の高値事例基準の買取提示は危険。",images:[]},
+   {id:"e53",month:"2026-02",type:"相場",text:"クレドール50周年「ロコモティブ」復刻でヴィンテージ商材に脚光（当時）。ブームの波が激しい銘柄。",images:[]}]},
+  {id:"w-seiko-junk", name:"ジャンク品（知識）", alias:"junk jランク ぱーつどり", entries:[
+   {id:"e54",month:"2026-05",type:"小ネタ",text:"Jランクのセイコーでも10件以上入札で2.3万〜2.6万円。海外コレクター・修理業者のパーツ取り需要が底堅い。動かなくても値段がつく。",images:[]}]}
+ ]},
+ {id:"w-citizen", name:"シチズン", en:"CITIZEN", kana:"しちずん", models:[
+  {id:"w-citizen-exceed", name:"エクシード", alias:"exceed えくしーど", entries:[
+   {id:"e55",month:"2026-06",type:"高騰",text:"国産ヴィンテージ見直し機運で平均5万円台→21万円台へ急騰。",images:[]}]},
+  {id:"w-citizen-chronomaster", name:"クロノマスター", alias:"chronomaster くろのますたー", entries:[
+   {id:"e56",month:"2026-02",type:"小ネタ",text:"60年代の金無垢は金相場上昇+海外の日本産ヴィンテージ人気で当時定価を遥かに凌ぐ価格に。4月も大幅上昇。",images:[]}]},
+  {id:"w-citizen-ecodrive", name:"エコドライブ", alias:"eco-drive えこどらいぶ", entries:[
+   {id:"e57",month:"2026-04",type:"警戒",text:"平均落札単価が前月比-70%以上下落。量産実用モデルはシビアに。",images:[]}]}
+ ]},
+ {id:"w-others", name:"その他ブランド（時計）", en:"OTHERS", kana:"そのた", models:[
+  {id:"w-o-corum", name:"コルム アドミラルズカップ", alias:"corum admirals cup こるむ", entries:[
+   {id:"e58",month:"2026-06",type:"小ネタ",text:"Cランク・ジャンク扱いに近い個体でも160万円台へ競り上がるケース増。金相場の底上げ+レトロデザイン再評価。",images:[]}]},
+  {id:"w-o-tudor", name:"チューダー ブラックベイ", alias:"tudor black bay ちゅーどる 79230", entries:[
+   {id:"e59",month:"2026-02",type:"警戒",text:"流通量が多く相場が安定せず月単位で±10%変動。買取値付けは慎重に。",images:[]}]},
+  {id:"w-o-bvlgari", name:"ブルガリブルガリ（時計）", alias:"bvlgari bb33ss ぶるがり", entries:[
+   {id:"e60",month:"2026-03",type:"警戒",text:"BB33SS：7.4万円→4.1万円へ下落。B5.4万/C3.4万で瑕疵減額は約-37%。",images:[]}]},
+  {id:"w-o-chanel-w", name:"シャネル J12 / プルミエール", alias:"chanel j12 premiere ぷるみえーる H0001", entries:[
+   {id:"e61",month:"2026-06",type:"知識",text:"J12：B平均28万円→C平均6.9万円と約-75%の強烈な下落。セラミックの欠け・傷は修復困難で査定の致命的マイナス要因。",images:[]},
+   {id:"e62",month:"2026-06",type:"鉄板",text:"プルミエールM(H0001)：10点出品・平均約12.7万円で安定。",images:[]},
+   {id:"e63",month:"2026-05",type:"警戒",text:"プルミエールL/M：指値15〜17万円は不落札多発、実勢は12〜13万円台。お客様の高値イメージに引っ張られた高値掴み注意。",images:[]}]},
+  {id:"w-o-hermes-w", name:"エルメス Hウォッチ / クリッパー", alias:"hermes h watch clipper えるめす HH1.201 HH1.210", entries:[
+   {id:"e64",month:"2026-06",type:"鉄板",text:"Hウォッチ(HH1.201)：5点出品・平均約7.3万円。3月もHH1.210が7点平均7.0万円・ばらつき8.7%とレディース定番の底堅さ。",images:[]},
+   {id:"e65",month:"2026-05",type:"鉄板",text:"クリッパー：出品数多いが需要が吸収。SS/GPコンビで3万〜5万円の手堅い相場。",images:[]}]},
+  {id:"w-o-iwc", name:"IWC 寄り目（旧自社ムーブ）", alias:"iwc よりめ", entries:[
+   {id:"e66",month:"2026-02",type:"小ネタ",text:"「寄り目」の旧自社ムーブ搭載機はパーツ取り需要が極めて高く、不動でも10万円以上の事例続出。",images:[]}]},
+  {id:"w-o-concord", name:"コンコルド", alias:"concord こんこるど", entries:[
+   {id:"e67",month:"2026-04",type:"小ネタ",text:"Cランクでもスクエア166万円・ベネト81万円。金相場高騰+宝飾時計再評価で意外なブランドが高騰。",images:[]}]},
+  {id:"w-o-moonswatch", name:"オメガ×スウォッチ", alias:"moonswatch むーんすうぉっち", entries:[
+   {id:"e68",month:"2026-05",type:"相場",text:"クオーツ・非金属ながら流動性が極めて高く、1.5万〜2万円で安定取引。",images:[]}]},
+  {id:"w-o-rubber", name:"純正ラバーベルト（知識）", alias:"rubber belt ベルト 金具", entries:[
+   {id:"e69",month:"2026-02",type:"小ネタ",text:"加水分解でベタつきがあってもDバックル等の金具に価値。ベルトごと持ち込んでもらうと査定額UP。",images:[]}]}
+ ]}
+]},
+{id:"bag", name:"バッグ", en:"BAG", brands:[
+ {id:"b-lv", name:"ルイ・ヴィトン", en:"LOUIS VUITTON", kana:"るいゔぃとん るいびとん ヴィトン びとん LV", models:[
+  {id:"b-lv-neverfull", name:"ネヴァーフル", alias:"neverfull ねゔぁーふる ねばーふる", entries:[
+   {id:"e70",month:"2026-06",type:"高騰",text:"平均76,100円→106,100円へ約3万円の大幅上昇。24点出品でも平均約106,000円で安定＝鉄板。大型実用バッグ再評価の主役。",images:[]},
+   {id:"e71",month:"2026-05",type:"警戒",text:"平均約8,600円下落の調整局面あり。月次で波があるため直近相場の確認を。",images:[]},
+   {id:"e72",month:"2026-02",type:"小ネタ",text:"旧型・ヌメ革ヤケありでも指値+40%超で落札(PM 14.5万円/乖離率139%)。外観の致命的破損がなければ高成約。",images:[]}]},
+  {id:"b-lv-noe", name:"ノエ", alias:"noe のえ 巾着", entries:[
+   {id:"e73",month:"2026-06",type:"高騰",text:"平均42,000円→68,500円へ約2.6万円上昇。巾着型オールドモデルへの回帰需要。古い型でも高値がつきやすい。",images:[]}]},
+  {id:"b-lv-speedy", name:"スピーディ", alias:"speedy すぴーでぃ", entries:[
+   {id:"e74",month:"2026-06",type:"相場",text:"平均約50,100円(74点)で安定。「スレ」記載でも平均約44,800円(最大10万円)。バンドリエール25.1万円、ピロー23万円の高額例も。",images:[]},
+   {id:"e75",month:"2026-03",type:"知識",text:"ランク別実勢：AB約6.1万/B約4.4万/BC約3.8万/C約2.8万/J(ジャンク)でも3.4万円。状態不良でも2〜3万円台は確実。過度な引き下げは他社流出リスク。",images:[]},
+   {id:"e76",month:"2026-02",type:"小ネタ",text:"ミニ・スピーディ：アクセサリー感覚の需要で古い個体でも5万円以上の「逆転現象」。",images:[]}]},
+  {id:"b-lv-keepall", name:"キーポル", alias:"keepall きーぽる ボストン", entries:[
+   {id:"e77",month:"2026-06",type:"相場",text:"平均約45,500円(62点)で安定。5月グラフィティは31万円。旅行需要一巡で約8,000円の調整も、素材価値の底は堅い。",images:[]},
+   {id:"e78",month:"2026-02",type:"知識",text:"バンドリエール(ストラップ付)需要が極めて高い。良品5.4万〜7.6万/シミ強め2.7万〜3.8万。ストラップ欠品でも3万〜5万円。",images:[]}]},
+  {id:"b-lv-alma", name:"アルマ", alias:"alma あるま", entries:[
+   {id:"e79",month:"2026-04",type:"鉄板",text:"アルマPM(モノグラム)：出品数多いが4万円前後でほぼ全数成約、回転率抜群。2月には指値4.5万→6.5万(乖離率144%)の例も。",images:[]}]},
+  {id:"b-lv-onthego", name:"オンザゴー", alias:"on the go otg おんざごー", entries:[
+   {id:"e80",month:"2026-06",type:"相場",text:"PM LVロマンス30万円、新型GM(IC確認済)22.9万円。4月はGM 18.8万円。高額ライン安定。",images:[]}]},
+  {id:"b-lv-garment", name:"ガーメントバッグ", alias:"garment がーめんと ポルトマントー", entries:[
+   {id:"e81",month:"2026-04",type:"小ネタ",text:"Cランクの古い旅行用でも10万円超→4月には16万円超えも。ニッチなヴィンテージ需要急増中の「化ける」アイテム。",images:[]}]},
+  {id:"b-lv-murakami", name:"村上隆コラボ", alias:"murakami むらかみ チェリー グラフィティ モノグラムマルチ", entries:[
+   {id:"e82",month:"2026-04",type:"小ネタ",text:"発売20年超でも「アートピース」として世界的に価値上昇。小物サイズでも9万円前後。草間彌生コラボ等の限定系も資金集中。",images:[]}]},
+  {id:"b-lv-epi", name:"エピ ビジネスバッグ", alias:"epi えぴ", entries:[
+   {id:"e83",month:"2026-04",type:"警戒",text:"不落札または3万円台の低空飛行。モノグラム比で需要が冷え込み。指値と実相場の乖離大。",images:[]}]},
+  {id:"b-lv-amazone", name:"アマゾン", alias:"amazone あまぞん", entries:[
+   {id:"e84",month:"2026-05",type:"警戒",text:"約1.2万円下落。2月は斜め掛け需要で3.7万円前後堅調だったが調整入り。",images:[]}]}
+ ]},
+ {id:"b-chanel", name:"シャネル", en:"CHANEL", kana:"しゃねる", models:[
+  {id:"b-chanel-matelasse", name:"マトラッセ", alias:"matelasse まとらっせ Wフラップ キャビアスキン", entries:[
+   {id:"e85",month:"2026-06",type:"相場",text:"キャビアスキン黒Wフラップ25が83.8万円。5月はミニ・キャビアが79万円。価格改定の影響で状態良の定番チェーンショルダーは高値継続見込み。",images:[]}]},
+  {id:"b-chanel-chain-beta", name:"チェーンバッグ（中ベタ）", alias:"ラムスキン べたつき 中ベタ", entries:[
+   {id:"e86",month:"2026-06",type:"小ネタ",text:"内側に激しいベタつき・剥がれのある古いラムスキンでもリペア前提需要で約68,000円以上。状態不良を理由に下げすぎない。",images:[]}]},
+  {id:"b-chanel-triplecoco", name:"トリプルココ 巾着", alias:"triple coco とりぷるここ", entries:[
+   {id:"e87",month:"2026-06",type:"高騰",text:"指値18,000円に対し195,000円(＋17.7万円)まで競り上がり。ヴィンテージシャネルの奪い合い発生中。",images:[]}]},
+  {id:"b-chanel-shoulder", name:"ショルダーバッグ全般", alias:"shoulder しょるだー", entries:[
+   {id:"e88",month:"2026-06",type:"鉄板",text:"84点の大量出品でも平均約111,000円で安定。5月も69点で平均約14.3万円。",images:[]},
+   {id:"e89",month:"2026-03",type:"警戒",text:"指値次第で真逆の結果に：14点中11点不落札(不落札率78%・指値平均約49.5万円)。強気指値の月は全滅する。買取提示は実勢基準で。",images:[]}]},
+  {id:"b-chanel-wood", name:"ウッドハンドル等 希少素材", alias:"wood handle ぷらすちっく", entries:[
+   {id:"e90",month:"2026-04",type:"小ネタ",text:"ウッド/プラスチックハンドルの希少モデルは本体並品でも20万円超。平場で「化ける」筆頭。",images:[]}]},
+  {id:"b-chanel-acc", name:"アクセサリー（ネックレス等）", alias:"accessory ねっくれす ぶれすれっと", entries:[
+   {id:"e91",month:"2026-03",type:"小ネタ",text:"Cランクの古いブレス単体で約14万円、ネックレスも平均5.2万円(11点)で安定。バッグが冷えても小物ヴィンテージは急騰。",images:[]}]}
+ ]},
+ {id:"b-hermes", name:"エルメス", en:"HERMES", kana:"えるめす", models:[
+  {id:"b-hermes-birkin", name:"バーキン", alias:"birkin ばーきん", entries:[
+   {id:"e92",month:"2026-06",type:"高騰",text:"色・素材問わず100万円超え連発。ホワイトHBは指値181.9万→295万円(＋113万円)。海外需要で下落リスク極小。",images:[]},
+   {id:"e93",month:"2026-05",type:"高騰",text:"ニロティカス：指値160万→306万円(＋146万円)。エキゾチックレザーは別格。バーキン25は125万円、平場でも100万超が常態化。",images:[]}]},
+  {id:"b-hermes-gp", name:"ガーデンパーティ", alias:"garden party がーでんぱーてぃ", entries:[
+   {id:"e94",month:"2026-03",type:"高騰",text:"BCランク(角スレ・使用感強)でも指値17.5万→29万円(＋11.5万円)。オンラインでも需要殺到。",images:[]}]},
+  {id:"b-hermes-picotin", name:"ピコタン", alias:"picotin ぴこたん", entries:[
+   {id:"e95",month:"2026-03",type:"相場",text:"ピコタンロックPM(Bランク)21.5万円。BCでも高額落札で底堅い。5月はピコタン18が28.5万円。",images:[]}]},
+  {id:"b-hermes-hb", name:"ハンドバッグ全般", alias:"handbag", entries:[
+   {id:"e96",month:"2026-06",type:"鉄板",text:"19点出品で平均約415,000円、その他小物も52点で平均約121,000円の驚異的アベレージ。前月比+23万円強の上昇。",images:[]}]},
+  {id:"b-hermes-silver", name:"シルバーアクセサリー", alias:"silver しるばー りんぐ", entries:[
+   {id:"e97",month:"2026-05",type:"小ネタ",text:"シルバーリングが指値21.9万→70万円(＋48.1万円)の異常値。エルメスはバッグ以外のアクセ需要も爆発中。",images:[]}]}
+ ]},
+ {id:"b-prada", name:"プラダ", en:"PRADA", kana:"ぷらだ", models:[
+  {id:"b-prada-nylon", name:"ナイロン（リュック等）", alias:"nylon ないろん re-nylon りゅっく", entries:[
+   {id:"e98",month:"2026-02",type:"小ネタ",text:"ナイロンリュックは海外需要急増で多少のスレがあっても2.8万円前後。Re-Nylon定価改定で中古も底上げ傾向。",images:[]}]},
+  {id:"b-prada-leather", name:"レザー（ガレリア/サフィアーノ）", alias:"galleria saffiano がれりあ さふぃあーの", entries:[
+   {id:"e99",month:"2026-06",type:"相場",text:"レザーのチェーンショルダーや特徴的デザインが10万円前後で手堅い。5月はガレリアスモール11.9万円。相場は底堅く推移見込み。",images:[]}]},
+  {id:"b-prada-wallet", name:"財布", alias:"wallet さいふ", entries:[
+   {id:"e100",month:"2026-05",type:"警戒",text:"不落札率90%。指値1.5万〜3.5万円でもバイヤーが見向きせず。高価買取は不良在庫リスク大。",images:[]}]}
+ ]},
+ {id:"b-gucci", name:"グッチ", en:"GUCCI", kana:"ぐっち", models:[
+  {id:"b-gucci-jackie", name:"ジャッキー / バンブー", alias:"jackie bamboo じゃっきー ばんぶー", entries:[
+   {id:"e101",month:"2026-06",type:"相場",text:"ニュージャッキー クロコが16万円。90年代バンブーも良コンディションなら11万円前後。ヴィンテージグッチは持ち込み促進のチャンス。",images:[]}]},
+  {id:"b-gucci-horsebit", name:"ホースビット / マーモント / オフィディア", alias:"horsebit marmont ophidia ほーすびっと まーもんと おふぃでぃあ", entries:[
+   {id:"e102",month:"2026-06",type:"相場",text:"ホースビット キルティング12万円、マーモント10万円等。アイコニックシリーズは需要に支えられ横ばい安定。",images:[]}]},
+  {id:"e-gucci-princy", name:"プリンシー", alias:"princy ぷりんしー", entries:[
+   {id:"e103",month:"2026-02",type:"小ネタ",text:"指値1.8万→5.3万円(乖離率294%)。旬な商材は強気に見積もれる好例。",images:[]}]},
+  {id:"b-gucci-warn", name:"GG大型トート / 財布", alias:"gg canvas とーと さいふ", entries:[
+   {id:"e104",month:"2026-05",type:"警戒",text:"財布は不落札率92%。GGキャンバス大型トートも指値2万円前後で不落札散見。トレンドは小型に移行、在庫過多警戒。",images:[]}]}
+ ]},
+ {id:"b-others", name:"その他ブランド（バッグ）", en:"OTHERS", kana:"そのた", models:[
+  {id:"b-o-fendi", name:"フェンディ マンマバケット", alias:"fendi mamma ふぇんでぃ ずっか", entries:[
+   {id:"e105",month:"2026-02",type:"鉄板",text:"ズッカ柄等アイコニックモデルは13万〜18万円で安定。小ぶりバッグ流行の追い風。4月も6.5万〜15万円で仕入れ意欲最高クラス。",images:[]}]},
+  {id:"b-o-celine", name:"セリーヌ", alias:"celine せりーぬ マカダム", entries:[
+   {id:"e106",month:"2026-04",type:"小ネタ",text:"パリマカダム(デニム)：Y2K再燃で15年前のデニム地バッグが8万円前後。当時人気を上回る相場。",images:[]},
+   {id:"e107",month:"2026-06",type:"警戒",text:"財布は不落札率100%。バッグと財布で真逆の評価。",images:[]}]},
+  {id:"b-o-loewe", name:"ロエベ", alias:"loewe ろえべ", entries:[
+   {id:"e108",month:"2026-06",type:"警戒",text:"財布は不落札率100%(6月)、トートも100%(5月)。指値約1.3万〜2.4万円でも見向きされず。相場観が完全に冷え込み。",images:[]}]},
+  {id:"b-o-ferragamo", name:"サルヴァトーレ・フェラガモ", alias:"ferragamo ふぇらがも", entries:[
+   {id:"e109",month:"2026-06",type:"警戒",text:"バッグ類の不落札率94〜100%。高価買取・高値掴みに細心の注意。",images:[]}]},
+  {id:"b-o-goyard", name:"ゴヤール サンルイ", alias:"goyard saint louis ごやーる", entries:[
+   {id:"e110",month:"2026-02",type:"相場",text:"サンルイPM 17.5万円(平場で指値大幅超え)。ただし3月は平均下落傾向で高額帯は美品限定に。",images:[]}]},
+  {id:"b-o-balenciaga", name:"バレンシアガ シティ", alias:"balenciaga city ばれんしあが", entries:[
+   {id:"e111",month:"2026-04",type:"相場",text:"最新モデル発売を機に「元祖」初期シティに注目。10万円前後の安定相場を形成し始め。",images:[]}]},
+  {id:"b-o-ysl", name:"サンローラン", alias:"ysl saint laurent さんろーらん", entries:[
+   {id:"e112",month:"2026-05",type:"高騰",text:"ショルダーバッグが平均51,800円→75,000円へ高騰。引き合い急増中。",images:[]}]}
+ ]}
+]},
+{id:"jewelry", name:"ジュエリー", en:"JEWELRY", brands:[
+ {id:"j-cartier", name:"カルティエ", en:"CARTIER", kana:"かるてぃえ", models:[
+  {id:"j-cartier-panthere", name:"パンテール", alias:"panthere ぱんてーる", entries:[
+   {id:"e113",month:"2026-06",type:"高騰",text:"ネックレス(750/ダイヤ・エメラルド)251万円、リング175万円。地金重量以上の圧倒的ブランド価値。想定以上のプレミアム上乗せ多数。",images:[]}]},
+  {id:"j-cartier-trinity", name:"トリニティ", alias:"trinity とりにてぃ", entries:[
+   {id:"e114",month:"2026-06",type:"高騰",text:"ブレスレット(Au750/ダイヤ)が231万円。地金の2〜3倍で競り上がる事例増。",images:[]},
+   {id:"e115",month:"2026-03",type:"鉄板",text:"42点出品でも平均16.2万円(最低8.5万円)と値崩れなし。出品数最多クラスの安定商材、積極買取推奨。",images:[]}]},
+  {id:"j-cartier-love", name:"ラブ", alias:"love らぶ", entries:[
+   {id:"e116",month:"2026-03",type:"鉄板",text:"ラブリング5点平均16.3万円、ラブブレス等11点平均20.9万円。地金価値の約2〜3倍(20万円〜)で安定。",images:[]}]},
+  {id:"j-cartier-maillon", name:"マイヨンパンテール", alias:"maillon panthere まいよん", entries:[
+   {id:"e117",month:"2026-03",type:"高騰",text:"9.0万円→25.4万円へ上昇。リバイバル需要で底堅い相場継続予測。",images:[]}]},
+  {id:"j-cartier-damour", name:"ダムール", alias:"damour だむーる ディアマンレジェ", entries:[
+   {id:"e118",month:"2026-03",type:"警戒",text:"42.2万円→11.7万円へ急落。定番でも明暗が分かれる。直近相場を必ず確認。",images:[]}]}
+ ]},
+ {id:"j-vca", name:"ヴァンクリーフ＆アーペル", en:"VAN CLEEF & ARPELS", kana:"ゔぁんくりーふ ばんくり VCA", models:[
+  {id:"j-vca-alhambra", name:"アルハンブラ", alias:"alhambra あるはんぶら ヴィンテージ マジック", entries:[
+   {id:"e119",month:"2026-06",type:"高騰",text:"マジックアルハンブラ ネックレス(750/シェル)202万円。ヴィンテージ回帰トレンド継続で強相場。",images:[]},
+   {id:"e120",month:"2026-03",type:"高騰",text:"ヴィンテージアルハンブラ：1月平均34.9万→3月66.0万円と約2倍に急騰。オニキスは100万円超え。購入から年数が経っていても高評価＝持ち込み促進トークに。",images:[]}]}
+ ]},
+ {id:"j-bvlgari", name:"ブルガリ", en:"BVLGARI", kana:"ぶるがり", models:[
+  {id:"j-bvlgari-bzero", name:"ビーゼロワン", alias:"b-zero1 びーぜろわん bzero", entries:[
+   {id:"e121",month:"2026-03",type:"鉄板",text:"29点出品で平均21.5万円(最低11.3万円)維持。安定感の高い定番。",images:[]}]},
+  {id:"j-bvlgari-bb", name:"ブルガリブルガリ", alias:"bvlgari bvlgari ぶるがりぶるがり", entries:[
+   {id:"e122",month:"2026-03",type:"高騰",text:"平均12.3万円→40.4万円へ大幅上昇。リバイバル+金相場の後押し。トゥボガスも上昇基調。",images:[]}]},
+  {id:"j-bvlgari-warn", name:"指値警戒（ブランド全体）", alias:"アルベアーレ 不落札", entries:[
+   {id:"e123",month:"2026-06",type:"警戒",text:"アルベアーレ：指値680万円に146件入札が殺到しながら不落札。3月も不落札率10.6%。人気はあるが指値が過剰だと成約しない典型。",images:[]}]}
+ ]},
+ {id:"j-tiffany", name:"ティファニー", en:"TIFFANY", kana:"てぃふぁにー", models:[
+  {id:"j-tiffany-t", name:"Tスマイル / バイザヤード", alias:"t smile by the yard すまいる ばいざやーど", entries:[
+   {id:"e124",month:"2026-06",type:"鉄板",text:"どちらも高回転。安心して高価買取を提示できる底堅い鉄板アイテム。",images:[]}]},
+  {id:"j-tiffany-beans", name:"ビーンズ", alias:"beans びーんず", entries:[
+   {id:"e125",month:"2026-03",type:"鉄板",text:"15点落札・平均9.9万円(最低5.5万円)。",images:[]}]},
+  {id:"j-tiffany-warn", name:"ドッツ / リターントゥ", alias:"dots return to どっつ りたーんとぅ", entries:[
+   {id:"e126",month:"2026-03",type:"警戒",text:"ドッツ：62.5万→13.2万円へ急落。リターントゥ：16.0万→5.4万円へ下落。ティファニー内でも銘柄で明暗。",images:[]}]},
+  {id:"j-tiffany-silver", name:"シルバーアクセ", alias:"silver しるばー", entries:[
+   {id:"e127",month:"2026-03",type:"小ネタ",text:"BCランクのブレスレットでも11万円の高値例。ただし流通量が極端に多いシルバー系は全体としてやや下落気味＝高値掴み注意(6月)。",images:[]}]}
+ ]},
+ {id:"j-others-brand", name:"その他ブランド（ジュエリー）", en:"OTHERS", kana:"そのた", models:[
+  {id:"j-o-boucheron", name:"ブシュロン セルパンボエム", alias:"boucheron serpent boheme ぶしゅろん", entries:[
+   {id:"e128",month:"2026-03",type:"相場",text:"K18セルパンボエムが79万円でBJ上位。",images:[]}]},
+  {id:"j-o-pomellato", name:"ポメラート", alias:"pomellato ぽめらーと", entries:[
+   {id:"e129",month:"2026-06",type:"相場",text:"ネックレス(18kt)216万円。大ぶりゴールドジュエリーがトレンド合致、高水準取引の予測。",images:[]}]},
+  {id:"j-o-mikimoto", name:"ミキモト", alias:"mikimoto みきもと", entries:[
+   {id:"e130",month:"2026-02",type:"小ネタ",text:"数十年前のヴィンテージパールでもブランド刻印の価値で10万円超を維持。3.6万〜10万円超で安定成約。",images:[]}]},
+  {id:"j-o-tasaki", name:"タサキ", alias:"tasaki たさき", entries:[
+   {id:"e131",month:"2026-03",type:"警戒",text:"不落札率11.4%とブランド全体で高め。強気指値が通らない。",images:[]}]},
+  {id:"j-o-hermes-j", name:"エルメス（ヘラクレス等）", alias:"hermes hercules ぶっくるせりえ", entries:[
+   {id:"e132",month:"2026-03",type:"高騰",text:"ヘラクレス/ブックルセリエ：廃盤モデル再評価で前月比130%・平均18万円前後。ただし同月の不落札率15.3%＝指値の付け方次第で明暗。",images:[]}]},
+  {id:"j-o-nodoc", name:"付属品欠品（知識）", alias:"保証書 箱 欠品", entries:[
+   {id:"e133",month:"2026-06",type:"小ネタ",text:"保証書・箱が欠品していても、ティファニーやカルティエ等の定番ラインなら本体のみで十分に高い相場が形成されている。",images:[]}]}
+ ]},
+ {id:"j-nbj", name:"ノーブランド（NBJ）", en:"NO BRAND", kana:"のーぶらんど NBJ 地金", models:[
+  {id:"j-nbj-tatezume", name:"立て爪ダイヤリング", alias:"たてづめ solitaire そりてーる", entries:[
+   {id:"e134",month:"2026-06",type:"小ネタ",text:"デザインが古くても1ct超・高品質ならルース価値で数十万円まで競り上がるケース増。Pt900×1.0ct前後なら50万円以上の成約例(2月)。",images:[]}]},
+  {id:"j-nbj-kirekin", name:"切れたK18/Ptネックレス", alias:"きれた 地金 じがね ちぎれた", entries:[
+   {id:"e135",month:"2026-06",type:"小ネタ",text:"金相場の歴史的高騰でチェーン切れ・変形でも地金価値だけで数万円。20g超のK18なら44万円台、30g超+メレ多用なら92万円超の例も(3月)。",images:[]}]},
+  {id:"j-nbj-k18design", name:"K18デザインリング（石なし）", alias:"でざいんりんぐ", entries:[
+   {id:"e136",month:"2026-03",type:"小ネタ",text:"主石なしでもg単価33,000円超(6.9gで23.4万円)の落札例。デザイン性が地金価値に上乗せされる。地金高騰の恩恵最大の商材。",images:[]}]},
+  {id:"j-nbj-iroishi", name:"色石リング（ルビー/サファイア）", alias:"いろいし ruby sapphire るびー さふぁいあ バブル期", entries:[
+   {id:"e137",month:"2026-06",type:"相場",text:"ルビー2.1ct Ptリングに53件入札・62万円。バブル期の取り巻きデザインでも主石品質が良ければ過去相場超え。1ct超良質ルース使用リングが上昇傾向。",images:[]},
+   {id:"e138",month:"2026-06",type:"警戒",text:"一方、大粒エメラルド/サファイアの高額NBJで強気指値の不落札が散見。色石の過大評価・過剰な買取価格提示に警戒。",images:[]}]},
+  {id:"j-nbj-pave", name:"パヴェ / メレダイヤ", alias:"pave mere ぱゔぇ めれ", entries:[
+   {id:"e139",month:"2026-06",type:"相場",text:"トータル1ct超のメレ使用パヴェは地金＋ダイヤの素材価値で5万〜10万円以上で安定。0.2ct前後の小粒Ptリングでも地金高騰で9万円の例(2月)。",images:[]}]},
+  {id:"j-nbj-coral", name:"血赤サンゴ", alias:"ちあか さんご coral 帯留め", entries:[
+   {id:"e140",month:"2026-06",type:"相場",text:"海外(アジア圏)バイヤー需要が根強く、色が濃く状態良なら数十万円単位。4.089ctで55万円、K18台40g級ブローチ59万円の例。国内需要が落ち着いても海外が下支え。",images:[]}]},
+  {id:"j-nbj-paraiba", name:"パライバトルマリン", alias:"paraiba ぱらいば", entries:[
+   {id:"e141",month:"2026-02",type:"高騰",text:"1.104ctに21件入札・69万円(指値大幅超え)。0.5〜1.0ctの小粒でもネオンカラー良品質なら入札20件超・100万円近くまで。希少石投資熱。",images:[]}]},
+  {id:"j-nbj-star", name:"スターサファイア", alias:"star sapphire すたーさふぁいあ", entries:[
+   {id:"e142",month:"2026-03",type:"高騰",text:"平均14.2万円→18.2万円へ安定上昇。TOP事例231万円(Pt保証)。色石の中で堅調さが際立つ。",images:[]}]},
+  {id:"j-nbj-emerald", name:"エメラルド", alias:"emerald えめらるど", entries:[
+   {id:"e143",month:"2026-02",type:"相場",text:"Pt900 24.06ctの超大粒が261万円で最高額。K18 24.85ctが216万円(3月)。ただし4月は平均-41%軟化の月もあり、月次の波が大きい。",images:[]}]},
+  {id:"j-nbj-loose", name:"ダイヤルース", alias:"loose るーす 裸石", entries:[
+   {id:"e144",month:"2026-03",type:"相場",text:"1.0-2.0ct帯：1月6.4万→2月14万→3月22万円と急騰。D/VVS-1/EX 1.02ctが81万円(30件入札)。鉄板グレードは E/VS-1/VG(平均14.7万)・G/VS-2/VG(平均8.5万)。",images:[]},
+   {id:"e145",month:"2026-03",type:"警戒",text:"0.5-1.0ct帯は下落継続(5.7万→2.1万→1.9万円)。中途半端なサイズ・SI/I-1クラスは入札1-2件で数千円台も。「0.5ctアップだから」の強気提示は高値掴みリスク。",images:[]}]},
+  {id:"j-nbj-pearl", name:"パール", alias:"pearl ぱーる 真珠 あこや", entries:[
+   {id:"e146",month:"2026-03",type:"警戒",text:"出品毎月600件超と供給過多で10.0万→7.0万円へ下落。ただし鑑別書付き良品は安定、総重量1.3kg超のまとめ品なら35〜36万円の高値。",images:[]}]},
+  {id:"j-nbj-color-dia", name:"カラーダイヤ", alias:"fancy pink blue ふぁんしー", entries:[
+   {id:"e147",month:"2026-03",type:"相場",text:"供給減ニュースと相関し、0.1ct台FANCY LIGHT PINKが1.5万円、0.3ct台GREENISH BLUEが1.1万円等、小粒ファンシーカラーが底堅い。今後も伸び予測。",images:[]}]}
+ ]}
+]}
+],
+talks:[
+ {id:"t01",scene:"説明",cat:"時計",text:"ガラスに小さな欠けがあると、修理費用がかかる分、査定にも数万円ほど影響してしまうんです。"},
+ {id:"t02",scene:"説明",cat:"時計",text:"セラミックは金属と違って修復がほぼ効かない素材なので、傷や欠けがあると評価が大きく変わってしまいます。"},
+ {id:"t03",scene:"説明",cat:"時計",text:"クォーツは中の回路が壊れていると修理が難しいことが多く、稼働品との差がどうしても大きくなります。"},
+ {id:"t04",scene:"説明",cat:"ジュエリー",text:"色石は品質による価格差がとても大きい素材なので、以前の相場感より低くなることもあります。"},
+ {id:"t05",scene:"後押し",cat:"バッグ",text:"多少のヤケやスレがあっても、ヴィンテージとして買いたい方が一定数いらっしゃるので、状態が悪いからといって値段がつかないことはほとんどないんですよ。"},
+ {id:"t06",scene:"後押し",cat:"バッグ",text:"内側のベタつきは、リペア前提で仕入れたいというニーズが強いので、思ったより悪くない金額をご案内できます。"},
+ {id:"t07",scene:"後押し",cat:"バッグ",text:"エルメスは正直、色や状態にかかわらず海外からの需要が強いので、多少のお使用感なら査定額にはほとんど影響しません。"},
+ {id:"t08",scene:"後押し",cat:"時計",text:"ロレックスのスポーツモデルは動かない状態でも部品取り需要があるので、諦めていた時計でも一度見せていただけると驚かれることが多いです。"},
+ {id:"t09",scene:"後押し",cat:"時計",text:"国産の古い時計は海外の修理業者さんが部品目当てで探していることが多く、動かなくても値段がつくケースが増えています。"},
+ {id:"t10",scene:"次回提案",cat:"時計",text:"ロレックス デイトジャスト：金無垢のコンビモデル、最近また評価が上がっているんです。以前査定したものでも見直せるかもしれません。"},
+ {id:"t11",scene:"次回提案",cat:"時計",text:"カルティエ CPCP／プリヴェ：文字盤に“PARIS”と入ったカルティエ、ご存知ですか？数年前の相場の3倍近くまで来ています。"},
+ {id:"t12",scene:"次回提案",cat:"時計",text:"グランドセイコー ヴィンテージ：“V.F.A.”という刻印が入ったグランドセイコー、当時の最高精度モデルなので状態に関わらず100万円を超えることもあります。"},
+ {id:"t13",scene:"次回提案",cat:"時計",text:"オメガ 色褪せベゼル：ベゼルの色が褪せて青っぽくなったオメガ、実はそれが逆に評価される“枯れ感”として人気なんです。"},
+ {id:"t14",scene:"次回提案",cat:"時計",text:"パテック フィリップ ムーブメント単体：動かない、部品しかない、というパテックでも値段がつくことがあります。処分する前にぜひ見せてください。"},
+ {id:"t15",scene:"次回提案",cat:"バッグ",text:"ルイ・ヴィトン ネヴァーフル／ノエ：大きめの実用バッグ、今すごく人気が戻ってきていて、型が古くても高値がついています。"},
+ {id:"t16",scene:"次回提案",cat:"バッグ",text:"エルメス シルバーアクセサリー：バーキンだけでなく、エルメスのシルバーリングも今かなり評価が上がっているんですよ。"},
+ {id:"t17",scene:"次回提案",cat:"バッグ",text:"セリーヌ マカダム（デニム）：懐かしいデニム地のセリーヌ、Y2Kブームで当時より高く売れることがあります。"},
+ {id:"t18",scene:"次回提案",cat:"バッグ",text:"村上隆コラボ（ルイ・ヴィトン）：あのチェリー柄やモノグラムマルチ、今“アート作品”としてコレクターに人気なんです。"},
+ {id:"t19",scene:"次回提案",cat:"バッグ",text:"フェンディ マンマバケット：ズッカ柄の小さめバッグ、今の“小ぶりバッグ”ブームにはまっていて安定して人気です。"},
+ {id:"t20",scene:"次回提案",cat:"ジュエリー",text:"切れたK18/Ptネックレス：チェーンが切れていても、金相場が高いので地金だけで数万円になることが多いです。捨てずに一度お持ちください。"},
+ {id:"t21",scene:"次回提案",cat:"ジュエリー",text:"立て爪ダイヤリング：デザインが古くても、石が1カラットを超えていればルースとしての価値で評価できます。"},
+ {id:"t22",scene:"次回提案",cat:"ジュエリー",text:"ヴァンクリーフ＆アーペル アルハンブラ：ヴィンテージのアルハンブラ、この数ヶ月で相場が2倍近くまで上がっています。"},
+ {id:"t23",scene:"次回提案",cat:"ジュエリー",text:"ミキモトのヴィンテージパール：昔のミキモトのパール、ブランドの刻印だけでしっかり評価できることが多いんです。"},
+ {id:"t24",scene:"次回提案",cat:"ジュエリー",text:"血赤サンゴ：色の濃いサンゴは海外での人気が根強くて、国内相場よりずっと高くなることがあります。"},
+ {id:"t25",scene:"警戒",cat:"全般",text:"お客様が“前はもっと高かった”とおっしゃる場合、それは数ヶ月前の一時的な高騰だったケースが多いので、最新の相場を根拠に丁寧にご説明しましょう。"},
+ {id:"t26",scene:"警戒",cat:"全般",text:"不落札が多発しているブランド・カテゴリ（例：ロエベ／セリーヌ／フェラガモの財布、シルバー系ブランドアクセサリー）は、指値ベースの高値提示をしないよう店舗間で共有する。"},
+ {id:"t27",scene:"知識",cat:"バッグ",text:"このガンチーニの金具、実はフィレンツェの本社ビルの門扉がモデルなんです。1969年からずっと変わらないデザインなので、状態が良ければ何年経っても評価が安定しているんですよ。（フェラガモ）"},
+ {id:"t28",scene:"知識",cat:"バッグ",text:"マイケル・コースは“アクセシブル・ラグジュアリー”という考え方で作られたブランドなので、状態が良ければ安定してお値段をお付けしやすいんです。"},
+ {id:"t29",scene:"知識",cat:"ジュエリー",text:"色石（ルビーやサファイア、エメラルド）は実は合成石がとても多くて、鑑別書がない場合は査定が慎重にならざるを得ないんです。天然かどうかの見極めは本当に難しいんですよ。"},
+ {id:"t30",scene:"知識",cat:"ジュエリー",text:"真珠は生きた宝石と呼ばれるくらい繊細で、汗や乾燥で経年劣化してしまうんです。ケースにしまいっぱなしでも劣化するので、たまに空気に触れさせてあげるといいですよ。"},
+ {id:"t31",scene:"知識",cat:"ジュエリー",text:"翡翠は“硬玉”と“軟玉”の2種類があって、宝石として評価されるのは硬玉だけなんです。緑が濃く透明感のあるものほど価値が高くなります。"},
+ {id:"t32",scene:"知識",cat:"バッグ",text:"クロエのバッグ、アルコール除菌シートで拭くと一瞬で色が抜けてしまうことがあるので、除菌は他の場所でしていただくのがおすすめです。"},
+ {id:"t33",scene:"知識",cat:"ジュエリー",text:"ターコイズは市場に出回っているものの多くが樹脂を含浸させる加工がされています。柔らかい石なので、他の宝石と分けて保管するだけでも状態がだいぶ変わりますよ。"},
+ {id:"t34",scene:"知識",cat:"バッグ",text:"1980〜90年代のオールドコーチ、当時はシンプルすぎると言われていたようですが、今はY2Kブームでヴィンテージとしてすごく評価が上がってきているんです。"},
+ {id:"t35",scene:"知識",cat:"バッグ",text:"クロエのパディントンって覚えていますか？2005年に社会現象になったバッグなんですが、今また再評価されていて、状態が良ければ見直せるかもしれません。"}
+]};
+/* ============ アプリ本体 ============ */
+const LS_KEY="kaitoriKB_v1";
+const TYPES=["鉄板","高騰","警戒","相場","小ネタ","知識"];
+const TALK_SCENES=["説明","後押し","次回提案","警戒","知識"];
+const TALK_CATS=["全般","時計","バッグ","ジュエリー"];
+let db=load();
+let view={v:"home"};
+let searchQ="";
+let filterType="";
+let talkSceneFilter="";
+let talkCatFilter="";
+
+function load(){
+  let d=null;
+  try{const s=localStorage.getItem(LS_KEY); if(s){d=JSON.parse(s);} }catch(e){}
+  if(!d) d=JSON.parse(JSON.stringify(SEED));
+  if(!d.pinned) d.pinned=[];
+  if(!d.talks) d.talks=[];
+  return d;
+}
+function save(){ try{localStorage.setItem(LS_KEY,JSON.stringify(db));}catch(e){alert("保存に失敗しました（容量超過の可能性）。書き出しでバックアップしてください。");} buildIndex(); }
+function uid(){return "x"+Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+/* ---- モデル名インデックス（本文リンク・全体検索用） ---- */
+let modelIndex=[];
+function buildIndex(){
+  modelIndex=[];
+  db.categories.forEach(c=>c.brands.forEach(b=>b.models.forEach(m=>{
+    if(m.name && m.name.length>=2) modelIndex.push({name:m.name,cid:c.id,bid:b.id,mid:m.id});
+  })));
+  modelIndex.sort((a,b)=>b.name.length-a.name.length);
+}
+function findModelAnywhere(mid){
+  for(const c of db.categories) for(const b of c.brands) for(const m of b.models) if(m.id===mid) return {c,b,m};
+  return null;
+}
+/* 本文中に登場するモデル名を検出してクリック可能なリンクに変換（自モデルは除外） */
+function linkify(text,excludeMid){
+  const raw=text||"";
+  let matches=[];
+  modelIndex.forEach(it=>{
+    if(it.mid===excludeMid) return;
+    let idx=0;
+    while((idx=raw.indexOf(it.name,idx))!==-1){
+      matches.push({start:idx,end:idx+it.name.length,it});
+      idx+=it.name.length;
+    }
+  });
+  matches.sort((a,b)=>a.start-b.start||(b.end-b.start)-(a.end-a.start));
+  let selected=[],lastEnd=-1;
+  matches.forEach(mt=>{ if(mt.start>=lastEnd){selected.push(mt);lastEnd=mt.end;} });
+  let out="",pos=0;
+  selected.forEach(mt=>{
+    out+=esc(raw.slice(pos,mt.start));
+    out+=`<span class="mlink" onclick='event.stopPropagation();go({v:"model",cat:"${mt.it.cid}",brand:"${mt.it.bid}",model:"${mt.it.mid}"})'>${esc(raw.slice(mt.start,mt.end))}</span>`;
+    pos=mt.end;
+  });
+  out+=esc(raw.slice(pos));
+  return out;
+}
+
+/* ---- IndexedDB（画像） ---- */
+let idb=null;
+const idbReady=new Promise(res=>{
+  const req=indexedDB.open("kaitoriKBimg",1);
+  req.onupgradeneeded=e=>{e.target.result.createObjectStore("imgs",{keyPath:"id"});};
+  req.onsuccess=e=>{idb=e.target.result;res();};
+  req.onerror=()=>res();
+});
+function imgPut(id,dataUrl){return idbReady.then(()=>new Promise(r=>{if(!idb)return r();const tx=idb.transaction("imgs","readwrite");tx.objectStore("imgs").put({id,data:dataUrl});tx.oncomplete=r;}));}
+function imgGet(id){return idbReady.then(()=>new Promise(r=>{if(!idb)return r(null);const rq=idb.transaction("imgs").objectStore("imgs").get(id);rq.onsuccess=()=>r(rq.result?rq.result.data:null);rq.onerror=()=>r(null);}));}
+function imgDel(id){return idbReady.then(()=>new Promise(r=>{if(!idb)return r();const tx=idb.transaction("imgs","readwrite");tx.objectStore("imgs").delete(id);tx.oncomplete=r;}));}
+function imgAll(){return idbReady.then(()=>new Promise(r=>{if(!idb)return r([]);const rq=idb.transaction("imgs").objectStore("imgs").getAll();rq.onsuccess=()=>r(rq.result||[]);rq.onerror=()=>r([]);}));}
+
+/* ---- 検索正規化：カタカナ→ひらがな、全角英数→半角、小文字化 ---- */
+function norm(s){
+  return (s||"").toLowerCase()
+    .replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60))
+    .replace(/[\uff01-\uff5e]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0))
+    .replace(/[\s\u3000・\-＿_／/]/g,"");
+}
+function esc(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+
+/* ---- ルーティング ---- */
+function go(v){view=v;searchQ="";document.getElementById("searchInput").value="";render();window.scrollTo(0,0);}
+function findCat(id){return db.categories.find(c=>c.id===id);}
+function findBrand(cid,bid){const c=findCat(cid);return c?c.brands.find(b=>b.id===bid):null;}
+function findModel(cid,bid,mid){const b=findBrand(cid,bid);return b?b.models.find(m=>m.id===mid):null;}
+
+function render(){
+  const crumbs=document.getElementById("crumbs");
+  const main=document.getElementById("main");
+  const fab=document.getElementById("fab");
+  fab.style.display="block";
+  if(searchQ){renderSearch(main);crumbs.innerHTML="";fab.style.display="none";return;}
+  if(view.v==="home"){
+    crumbs.innerHTML="";
+    fab.textContent="＋ ブランド追加";
+    let entN=0,brN=0;
+    db.categories.forEach(c=>{brN+=c.brands.length;c.brands.forEach(b=>b.models.forEach(m=>entN+=m.entries.length));});
+    main.innerHTML=`<div class="cat-grid">`+db.categories.map(c=>{
+      let bn=c.brands.length,mn=0,en=0;
+      c.brands.forEach(b=>{mn+=b.models.length;b.models.forEach(m=>en+=m.entries.length);});
+      return `<div class="cat-card" onclick='go({v:"brands",cat:"${c.id}"})'>
+        <div class="cen">${esc(c.en)}</div><div class="cname serif">${esc(c.name)}</div>
+        <div class="ccount">ブランド ${bn}<br>記事 ${en}</div></div>`;
+    }).join("")+`</div>`+
+    (db.pinned.length?`<div class="sec"><span class="st">★ ピン留め</span><div class="line"></div></div>
+    <div class="pin-section">${renderPinned()}</div>`:``)+
+    `<div class="sec"><span class="st">接客トーク集</span><div class="line"></div></div>
+    <div class="pin-item" onclick='go({v:"talks"})'><div style="flex:1;min-width:0"><div class="pnm">全${db.talks.length}件のトークを見る</div><div class="ppath">査定説明・後押し・次回提案・警戒・ブランド知識</div></div><span class="arrow">›</span></div>`+
+    `<div class="sec"><span class="st">最近の追加・更新</span><div class="line"></div></div>
+    ${renderRecent()}
+    <p class="note">検索はひらがな・カタカナ・英語どれでもOK。例：「ばーきん」「birkin」「バーキン」</p>`;
+    return;
+  }
+  if(view.v==="archive"){
+    crumbs.innerHTML=`<a onclick='go({v:"home"})'>ホーム</a><span class="sep">›</span><span>月別アーカイブ</span>`;
+    fab.style.display="none";
+    if(view.month){renderArchiveMonth(main,view.month);return;}
+    const allMonths=[];
+    db.categories.forEach(c=>c.brands.forEach(b=>b.models.forEach(m=>m.entries.forEach(e=>{if(e.month)allMonths.push(e.month);}))));
+    const months=[...new Set(allMonths)].sort().reverse();
+    main.innerHTML=`<div class="sec"><span class="st">月度を選択</span><div class="line"></div></div>
+      <div class="month-grid">${months.map(mo=>`<div class="month-chip" onclick='go({v:"archive",month:"${mo}"})'>${esc(mo)}</div>`).join("")||`<span class="empty">記事がまだありません</span>`}</div>`;
+    return;
+  }
+  if(view.v==="talks"){
+    crumbs.innerHTML=`<a onclick='go({v:"home"})'>ホーム</a><span class="sep">›</span><span>接客トーク集</span>`;
+    fab.textContent="＋ トーク追加";
+    const sf=talkSceneFilter||"", cf=talkCatFilter||"";
+    let list=[...db.talks];
+    if(sf) list=list.filter(t=>t.scene===sf);
+    if(cf) list=list.filter(t=>t.cat===cf);
+    main.innerHTML=`
+      <div class="chips">
+        <div class="chip ${sf===""?"on":""}" onclick='talkSceneFilter="";render()'>すべて</div>
+        ${TALK_SCENES.map(s=>`<div class="chip ${sf===s?"on":""}" onclick='talkSceneFilter="${s}";render()'>${s}</div>`).join("")}
+      </div>
+      <div class="chips">
+        <div class="chip ${cf===""?"on":""}" onclick='talkCatFilter="";render()'>全カテゴリ</div>
+        ${TALK_CATS.map(c=>`<div class="chip ${cf===c?"on":""}" onclick='talkCatFilter="${c}";render()'>${c}</div>`).join("")}
+      </div>
+      ${list.length?list.map(t=>talkHTML(t)).join(""):`<div class="empty">該当するトークがありません。</div>`}`;
+    loadThumbs();
+    return;
+  }
+  if(view.v==="brands"){
+    const c=findCat(view.cat);
+    crumbs.innerHTML=`<a onclick='go({v:"home"})'>ホーム</a><span class="sep">›</span><span>${esc(c.name)}</span>`;
+    fab.textContent="＋ ブランド追加";
+    main.innerHTML=`<div class="list">`+c.brands.map(b=>{
+      const mn=b.models.length; let en=0;b.models.forEach(m=>en+=m.entries.length);
+      return `<div class="li" onclick='go({v:"models",cat:"${c.id}",brand:"${b.id}"})'>
+        <div class="grow"><div class="nm">${esc(b.name)}</div><div class="sub">${esc(b.en||"")}</div></div>
+        <div class="cnt">${mn}モデル / ${en}件</div><div class="arrow">›</div></div>`;
+    }).join("")+`</div>`+(c.brands.length?"":`<div class="empty">まだブランドがありません。<br>「＋ ブランド追加」から登録しましょう。</div>`);
+    return;
+  }
+  if(view.v==="models"){
+    const c=findCat(view.cat),b=findBrand(view.cat,view.brand);
+    crumbs.innerHTML=`<a onclick='go({v:"home"})'>ホーム</a><span class="sep">›</span><a onclick='go({v:"brands",cat:"${c.id}"})'>${esc(c.name)}</a><span class="sep">›</span><span>${esc(b.name)}</span>
+      <span style="flex:1"></span><a onclick='openBrandModal("${c.id}","${b.id}")' style="font-size:.72rem">編集</a>`;
+    fab.textContent="＋ モデル追加";
+    main.innerHTML=`<div class="list">`+b.models.map(m=>{
+      const types=[...new Set(m.entries.map(e=>e.type))];
+      return `<div class="li" onclick='go({v:"model",cat:"${c.id}",brand:"${b.id}",model:"${m.id}"})'>
+        <div class="grow"><div class="nm">${esc(m.name)}</div>
+        <div class="badge-row">${types.map(t=>`<span class="tag t-${t}">${t}</span>`).join("")}</div></div>
+        <div class="cnt">${m.entries.length}件</div><div class="arrow">›</div></div>`;
+    }).join("")+`</div>`+(b.models.length?"":`<div class="empty">まだモデルがありません。<br>「＋ モデル追加」から登録しましょう。</div>`);
+    return;
+  }
+  if(view.v==="model"){
+    const c=findCat(view.cat),b=findBrand(view.cat,view.brand),m=findModel(view.cat,view.brand,view.model);
+    crumbs.innerHTML=`<a onclick='go({v:"home"})'>ホーム</a><span class="sep">›</span><a onclick='go({v:"brands",cat:"${c.id}"})'>${esc(c.name)}</a><span class="sep">›</span><a onclick='go({v:"models",cat:"${c.id}",brand:"${b.id}"})'>${esc(b.name)}</a><span class="sep">›</span><span>${esc(m.name)}</span>
+      <span style="flex:1"></span>
+      <button class="pin-btn ${db.pinned.includes(m.id)?"on":""}" onclick='togglePin("${m.id}")'>${db.pinned.includes(m.id)?"★ ピン留め中":"☆ ピン留め"}</button>
+      <a onclick='openModelModal("${c.id}","${b.id}","${m.id}")' style="font-size:.72rem;margin-left:8px">編集</a>`;
+    fab.textContent="＋ 記事追加";
+    const ents=[...m.entries].sort((a,x)=>(x.month||"").localeCompare(a.month||""));
+    const filtered=filterType?ents.filter(e=>e.type===filterType):ents;
+    main.innerHTML=`
+      <div class="chips">
+        <div class="chip ${filterType===""?"on":""}" onclick='filterType="";render()'>すべて</div>
+        ${TYPES.map(t=>`<div class="chip ${filterType===t?"on":""}" onclick='filterType="${t}";render()'>${t}</div>`).join("")}
+      </div>
+      ${filtered.map(e=>entryHTML(e,c.id,b.id,m.id)).join("")||`<div class="empty">記事がありません。</div>`}`;
+    loadThumbs();
+    return;
+  }
+}
+function renderRecent(){
+  const all=[];
+  db.categories.forEach(c=>c.brands.forEach(b=>b.models.forEach(m=>m.entries.forEach(e=>all.push({e,c,b,m})))));
+  all.sort((a,x)=>(x.e.month||"").localeCompare(a.e.month||""));
+  return all.slice(0,5).map(({e,c,b,m})=>`
+    <div class="entry" onclick='go({v:"model",cat:"${c.id}",brand:"${b.id}",model:"${m.id}"})' style="cursor:pointer">
+      <div class="sr-path">${esc(c.name)} › ${esc(b.name)} › ${esc(m.name)}</div>
+      <div class="e-head"><span class="tag month">${esc(e.month||"")}</span><span class="tag t-${e.type}">${e.type}</span></div>
+      <div class="e-text">${esc(e.text.length>70?e.text.slice(0,70)+"…":e.text)}</div>
+    </div>`).join("");
+}
+function entryHTML(e,cid,bid,mid){
+  return `<div class="entry">
+    <button class="e-edit" onclick='openEntryModal("${cid}","${bid}","${mid}","${e.id}")'>編集</button>
+    <div class="e-head"><span class="tag month">${esc(e.month||"")}</span><span class="tag t-${e.type}">${e.type}</span></div>
+    <div class="e-text">${linkify(e.text,mid)}</div>
+    ${e.images&&e.images.length?`<div class="thumbs">${e.images.map(id=>`<img data-img="${id}" alt="" onclick='showLightbox("${id}")'>`).join("")}</div>`:""}
+  </div>`;
+}
+function talkHTML(t){
+  return `<div class="talk-card">
+    <button class="e-edit" onclick='openTalkModal("${t.id}")'>編集</button>
+    <div class="t-head"><span class="tag t-${t.scene}">${t.scene}</span><span class="tag cat">${esc(t.cat||"全般")}</span></div>
+    <div class="t-text">${linkify(t.text,null)}</div>
+  </div>`;
+}
+function renderPinned(){
+  return db.pinned.map(mid=>{
+    const found=findModelAnywhere(mid);
+    if(!found) return "";
+    const {c,b,m}=found;
+    return `<div class="pin-item" onclick='go({v:"model",cat:"${c.id}",brand:"${b.id}",model:"${m.id}"})'>
+      <div style="flex:1;min-width:0"><div class="pnm">${esc(m.name)}</div><div class="ppath">${esc(c.name)} › ${esc(b.name)}</div></div>
+      <button class="unpin" onclick='event.stopPropagation();togglePin("${m.id}")'>×</button>
+    </div>`;
+  }).join("");
+}
+function togglePin(mid){
+  const i=db.pinned.indexOf(mid);
+  if(i>=0) db.pinned.splice(i,1); else db.pinned.push(mid);
+  save();render();
+}
+function renderArchiveMonth(main,month){
+  const hits=[];
+  db.categories.forEach(c=>c.brands.forEach(b=>b.models.forEach(m=>m.entries.forEach(e=>{
+    if(e.month===month) hits.push({e,c,b,m});
+  }))));
+  main.innerHTML=`<div class="chips"><div class="chip" onclick='go({v:"archive"})'>‹ 月度を選び直す</div></div>
+    <div class="sec"><span class="st">${esc(month)}（${hits.length}件）</span><div class="line"></div></div>
+    ${hits.map(({e,c,b,m})=>`
+    <div class="entry" onclick='go({v:"model",cat:"${c.id}",brand:"${b.id}",model:"${m.id}"})' style="cursor:pointer">
+      <div class="sr-path">${esc(c.name)} › ${esc(b.name)} › ${esc(m.name)}</div>
+      <div class="e-head"><span class="tag t-${e.type}">${e.type}</span></div>
+      <div class="e-text">${linkify(e.text,m.id)}</div>
+      ${e.images&&e.images.length?`<div class="thumbs">${e.images.map(id=>`<img data-img="${id}" alt="" onclick='event.stopPropagation();showLightbox("${id}")'>`).join("")}</div>`:""}
+    </div>`).join("")||`<div class="empty">この月度の記事はありません。</div>`}`;
+  loadThumbs();
+}
+function loadThumbs(){
+  document.querySelectorAll("img[data-img]").forEach(el=>{
+    imgGet(el.dataset.img).then(d=>{if(d)el.src=d;else el.style.display="none";});
+  });
+}
+
+/* ---- 検索 ---- */
+function onSearch(q){searchQ=q.trim();render();}
+function renderSearch(main){
+  const q=norm(searchQ);
+  if(!q){render();return;}
+  const hits=[];
+  db.categories.forEach(c=>c.brands.forEach(b=>{
+    const bKey=norm(b.name+(b.en||"")+(b.kana||""));
+    b.models.forEach(m=>{
+      const mKey=norm(m.name+(m.alias||""));
+      const nameHit=bKey.includes(q)||mKey.includes(q);
+      m.entries.forEach(e=>{
+        if(nameHit||norm(e.text).includes(q)) hits.push({e,c,b,m});
+      });
+      if((nameHit)&&m.entries.length===0) hits.push({e:null,c,b,m});
+    });
+  }));
+  const talkHits=db.talks.filter(t=>norm(t.text).includes(q)||norm(t.scene).includes(q)||norm(t.cat).includes(q));
+  hits.sort((a,x)=>((x.e&&x.e.month)||"").localeCompare((a.e&&a.e.month)||""));
+  main.innerHTML=`<div class="sec"><span class="st">検索結果 ${hits.length+talkHits.length}件</span><div class="line"></div></div>`+
+    (talkHits.length?`<div class="sec"><span class="st">トーク集（${talkHits.length}件）</span><div class="line"></div></div>${talkHits.map(t=>talkHTML(t)).join("")}`:``)+
+    (hits.length||talkHits.length?"":`<div class="empty">見つかりませんでした。<br>別のキーワードで試してください。</div>`)+
+    (hits.length?hits.map(({e,c,b,m})=>`
+    <div class="entry" style="cursor:pointer" onclick='go({v:"model",cat:"${c.id}",brand:"${b.id}",model:"${m.id}"})'>
+      <div class="sr-path">${esc(c.name)} › ${esc(b.name)} › <span class="hl">${esc(m.name)}</span></div>
+      ${e?`<div class="e-head"><span class="tag month">${esc(e.month||"")}</span><span class="tag t-${e.type}">${e.type}</span></div>
+      <div class="e-text">${linkify(e.text,m.id)}</div>
+      ${e.images&&e.images.length?`<div class="thumbs">${e.images.map(id=>`<img data-img="${id}" alt="" onclick='event.stopPropagation();showLightbox("${id}")'>`).join("")}</div>`:""}`:`<div class="e-text" style="color:var(--paper-dim)">（記事なし）</div>`}
+    </div>`).join(""):``);
+  loadThumbs();
+}
+
+/* ---- FAB ---- */
+function onFab(){
+  if(view.v==="home"){pickCatThen(cid=>openBrandModal(cid,null));return;}
+  if(view.v==="brands"){openBrandModal(view.cat,null);return;}
+  if(view.v==="models"){openModelModal(view.cat,view.brand,null);return;}
+  if(view.v==="model"){openEntryModal(view.cat,view.brand,view.model,null);return;}
+  if(view.v==="talks"){openTalkModal(null);return;}
+}
+function pickCatThen(cb){
+  showModal(`<h3>カテゴリを選択</h3><div class="menu-list">
+    ${db.categories.map(c=>`<button class="btn ghost" data-cid="${c.id}">${esc(c.name)}</button>`).join("")}
+  </div><div class="btn-row"><button class="btn ghost" onclick="closeModal()">キャンセル</button></div>`);
+  document.querySelectorAll("[data-cid]").forEach(el=>el.onclick=()=>{const cid=el.dataset.cid;closeModal();cb(cid);});
+}
+
+/* ---- モーダル共通 ---- */
+function showModal(html){
+  document.getElementById("modalRoot").innerHTML=`<div class="overlay" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+}
+function closeModal(){document.getElementById("modalRoot").innerHTML="";}
+
+/* ---- ブランド追加/編集 ---- */
+function openBrandModal(cid,bid){
+  const b=bid?findBrand(cid,bid):null;
+  showModal(`<h3>${b?"ブランドを編集":"ブランドを追加"}</h3>
+    <div class="f-label">ブランド名（日本語）</div><input class="f-input" id="fBname" value="${b?esc(b.name):""}" placeholder="例：ロレックス">
+    <div class="f-label">英語表記</div><input class="f-input" id="fBen" value="${b?esc(b.en||""):""}" placeholder="例：ROLEX">
+    <div class="f-label">よみがな・別名（検索用／スペース区切り）</div><input class="f-input" id="fBkana" value="${b?esc(b.kana||""):""}" placeholder="例：ろれっくす rolex">
+    <div class="btn-row">
+      ${b?`<button class="btn danger" onclick='delBrand("${cid}","${bid}")'>削除</button>`:""}
+      <button class="btn ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn primary" onclick='saveBrand("${cid}",${b?`"${bid}"`:"null"})'>保存</button>
+    </div>`);
+}
+function saveBrand(cid,bid){
+  const name=document.getElementById("fBname").value.trim();
+  if(!name){alert("ブランド名を入力してください");return;}
+  const en=document.getElementById("fBen").value.trim();
+  const kana=document.getElementById("fBkana").value.trim();
+  const c=findCat(cid);
+  if(bid){const b=findBrand(cid,bid);b.name=name;b.en=en;b.kana=kana;}
+  else{c.brands.push({id:uid(),name,en,kana,models:[]});}
+  save();closeModal();render();
+}
+function delBrand(cid,bid){
+  const b=findBrand(cid,bid);
+  if(!confirm(`「${b.name}」を配下のモデル・記事ごと削除します。よろしいですか？`))return;
+  const c=findCat(cid);
+  b.models.forEach(m=>m.entries.forEach(e=>(e.images||[]).forEach(imgDel)));
+  c.brands=c.brands.filter(x=>x.id!==bid);
+  save();closeModal();go({v:"brands",cat:cid});
+}
+
+/* ---- モデル追加/編集 ---- */
+function openModelModal(cid,bid,mid){
+  const m=mid?findModel(cid,bid,mid):null;
+  showModal(`<h3>${m?"モデルを編集":"モデルを追加"}</h3>
+    <div class="f-label">モデル名</div><input class="f-input" id="fMname" value="${m?esc(m.name):""}" placeholder="例：デイトジャスト">
+    <div class="f-label">別名・型番・よみがな（検索用／スペース区切り）</div><input class="f-input" id="fMalias" value="${m?esc(m.alias||""):""}" placeholder="例：datejust でいとじゃすと 16233">
+    <div class="btn-row">
+      ${m?`<button class="btn danger" onclick='delModel("${cid}","${bid}","${mid}")'>削除</button>`:""}
+      <button class="btn ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn primary" onclick='saveModel("${cid}","${bid}",${m?`"${mid}"`:"null"})'>保存</button>
+    </div>`);
+}
+function saveModel(cid,bid,mid){
+  const name=document.getElementById("fMname").value.trim();
+  if(!name){alert("モデル名を入力してください");return;}
+  const alias=document.getElementById("fMalias").value.trim();
+  const b=findBrand(cid,bid);
+  if(mid){const m=findModel(cid,bid,mid);m.name=name;m.alias=alias;}
+  else{b.models.push({id:uid(),name,alias,entries:[]});}
+  save();closeModal();render();
+}
+function delModel(cid,bid,mid){
+  const m=findModel(cid,bid,mid);
+  if(!confirm(`「${m.name}」を記事ごと削除します。よろしいですか？`))return;
+  m.entries.forEach(e=>(e.images||[]).forEach(imgDel));
+  const b=findBrand(cid,bid);
+  b.models=b.models.filter(x=>x.id!==mid);
+  save();closeModal();go({v:"models",cat:cid,brand:bid});
+}
+
+/* ---- 記事追加/編集 ---- */
+let pendingImgs=[];
+function openEntryModal(cid,bid,mid,eid){
+  const m=findModel(cid,bid,mid);
+  const e=eid?m.entries.find(x=>x.id===eid):null;
+  pendingImgs=e?[...(e.images||[])]:[];
+  const now=new Date();
+  const defMonth=e?e.month:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}`;
+  showModal(`<h3>${e?"記事を編集":"記事を追加"}</h3>
+    <div class="f-label">月度</div><input class="f-input" id="fEmonth" type="month" value="${esc(defMonth)}">
+    <div class="f-label">種別</div>
+    <div class="type-row" id="fEtype">${TYPES.map(t=>`<div class="type-opt t-${t} ${((e&&e.type)||"相場")===t?"on":""}" data-t="${t}">${t}</div>`).join("")}</div>
+    <div class="f-label">内容</div><textarea class="f-textarea" id="fEtext" placeholder="相場・接客に活かせる情報をメモ">${e?esc(e.text):""}</textarea>
+    <div class="f-label">画像</div>
+    <div class="img-add" id="fEimgs"></div>
+    <input type="file" id="fEfile" accept="image/*" multiple style="display:none" onchange="addImgs(this.files)">
+    <div class="btn-row">
+      ${e?`<button class="btn danger" onclick='delEntry("${cid}","${bid}","${mid}","${eid}")'>削除</button>`:""}
+      <button class="btn ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn primary" onclick='saveEntry("${cid}","${bid}","${mid}",${e?`"${eid}"`:"null"})'>保存</button>
+    </div>`);
+  document.querySelectorAll("#fEtype .type-opt").forEach(el=>el.onclick=()=>{
+    document.querySelectorAll("#fEtype .type-opt").forEach(x=>x.classList.remove("on"));
+    el.classList.add("on");
+  });
+  renderImgAdd();
+}
+function renderImgAdd(){
+  const box=document.getElementById("fEimgs");
+  if(!box)return;
+  box.innerHTML=pendingImgs.map(id=>`<div class="th"><img data-pimg="${id}"><button class="rm" onclick='rmPendingImg("${id}")'>×</button></div>`).join("")+
+    `<button class="add-img-btn" onclick="document.getElementById('fEfile').click()">＋</button>`;
+  box.querySelectorAll("img[data-pimg]").forEach(el=>imgGet(el.dataset.pimg).then(d=>{if(d)el.src=d;}));
+}
+function rmPendingImg(id){pendingImgs=pendingImgs.filter(x=>x!==id);renderImgAdd();}
+function addImgs(files){
+  [...files].forEach(f=>{
+    const rd=new FileReader();
+    rd.onload=()=>{
+      const img=new Image();
+      img.onload=()=>{
+        const max=1200;let w=img.width,h=img.height;
+        if(w>max||h>max){const r=Math.min(max/w,max/h);w=Math.round(w*r);h=Math.round(h*r);}
+        const cv=document.createElement("canvas");cv.width=w;cv.height=h;
+        cv.getContext("2d").drawImage(img,0,0,w,h);
+        const dataUrl=cv.toDataURL("image/jpeg",0.82);
+        const id=uid();
+        imgPut(id,dataUrl).then(()=>{pendingImgs.push(id);renderImgAdd();});
+      };
+      img.src=rd.result;
+    };
+    rd.readAsDataURL(f);
+  });
+  document.getElementById("fEfile").value="";
+}
+function saveEntry(cid,bid,mid,eid){
+  const month=document.getElementById("fEmonth").value;
+  const typeEl=document.querySelector("#fEtype .type-opt.on");
+  const type=typeEl?typeEl.dataset.t:"相場";
+  const text=document.getElementById("fEtext").value.trim();
+  if(!text){alert("内容を入力してください");return;}
+  const m=findModel(cid,bid,mid);
+  if(eid){const e=m.entries.find(x=>x.id===eid);
+    (e.images||[]).forEach(id=>{if(!pendingImgs.includes(id))imgDel(id);});
+    e.month=month;e.type=type;e.text=text;e.images=[...pendingImgs];}
+  else{m.entries.push({id:uid(),month,type,text,images:[...pendingImgs]});}
+  save();closeModal();render();
+}
+function delEntry(cid,bid,mid,eid){
+  if(!confirm("この記事を削除します。よろしいですか？"))return;
+  const m=findModel(cid,bid,mid);
+  const e=m.entries.find(x=>x.id===eid);
+  (e.images||[]).forEach(imgDel);
+  m.entries=m.entries.filter(x=>x.id!==eid);
+  save();closeModal();render();
+}
+
+/* ---- トーク集 CRUD ---- */
+function openTalkModal(tid){
+  const t=tid?db.talks.find(x=>x.id===tid):null;
+  showModal(`<h3>${t?"トークを編集":"トークを追加"}</h3>
+    <div class="f-label">シーン</div>
+    <div class="type-row" id="fTscene">${TALK_SCENES.map(s=>`<div class="type-opt t-${s} ${((t&&t.scene)||"次回提案")===s?"on":""}" data-s="${s}">${s}</div>`).join("")}</div>
+    <div class="f-label">カテゴリ</div>
+    <div class="type-row" id="fTcat">${TALK_CATS.map(c=>`<div class="type-opt ${((t&&t.cat)||"全般")===c?"on":""}" data-c="${c}" style="border-color:var(--line);color:${((t&&t.cat)||"全般")===c?"var(--gold-soft)":"var(--paper-dim)"}">${c}</div>`).join("")}</div>
+    <div class="f-label">トーク内容</div><textarea class="f-textarea" id="fTtext" placeholder="お客様にそのまま言える文章で入力">${t?esc(t.text):""}</textarea>
+    <div class="btn-row">
+      ${t?`<button class="btn danger" onclick='delTalk("${tid}")'>削除</button>`:""}
+      <button class="btn ghost" onclick="closeModal()">キャンセル</button>
+      <button class="btn primary" onclick='saveTalk(${t?`"${tid}"`:"null"})'>保存</button>
+    </div>`);
+  document.querySelectorAll("#fTscene .type-opt").forEach(el=>el.onclick=()=>{
+    document.querySelectorAll("#fTscene .type-opt").forEach(x=>x.classList.remove("on"));
+    el.classList.add("on");
+  });
+  document.querySelectorAll("#fTcat .type-opt").forEach(el=>el.onclick=()=>{
+    document.querySelectorAll("#fTcat .type-opt").forEach(x=>{x.classList.remove("on");x.style.color="var(--paper-dim)";});
+    el.classList.add("on");el.style.color="var(--gold-soft)";
+  });
+}
+function saveTalk(tid){
+  const sceneEl=document.querySelector("#fTscene .type-opt.on");
+  const catEl=document.querySelector("#fTcat .type-opt.on");
+  const scene=sceneEl?sceneEl.dataset.s:"次回提案";
+  const cat=catEl?catEl.dataset.c:"全般";
+  const text=document.getElementById("fTtext").value.trim();
+  if(!text){alert("トーク内容を入力してください");return;}
+  if(tid){const t=db.talks.find(x=>x.id===tid);t.scene=scene;t.cat=cat;t.text=text;}
+  else{db.talks.push({id:uid(),scene,cat,text});}
+  save();closeModal();render();
+}
+function delTalk(tid){
+  if(!confirm("このトークを削除します。よろしいですか？"))return;
+  db.talks=db.talks.filter(x=>x.id!==tid);
+  save();closeModal();render();
+}
+
+/* ---- ライトボックス ---- */
+function showLightbox(id){
+  imgGet(id).then(d=>{
+    if(!d)return;
+    document.getElementById("lightboxRoot").innerHTML=`<div class="lightbox" onclick="this.remove()"><img src="${d}"></div>`;
+  });
+}
+
+/* ---- 設定（バックアップ/復元/初期化） ---- */
+function openSettings(){
+  showModal(`<h3>設定</h3><div class="menu-list">
+    <button class="btn ghost" onclick="exportJSON()">データを書き出す（JSONバックアップ）</button>
+    <button class="btn ghost" onclick="document.getElementById('mergeFile').click()">データを追記する（差分マージ読み込み）</button>
+    <button class="btn ghost" onclick="document.getElementById('impFile').click()">データを読み込む（JSON復元・全置換）</button>
+    <button class="btn ghost" onclick="resetSeed()" style="border-color:var(--red);color:var(--red)">初期データに戻す（自分の編集は消えます）</button>
+  </div>
+  <input type="file" id="impFile" accept=".json,application/json" style="display:none" onchange="importJSON(this.files[0])">
+  <input type="file" id="mergeFile" accept=".json,application/json" style="display:none" onchange="mergeImport(this.files[0])">
+  <p class="note">「追記する」は既存データを消さず、新しいカテゴリ・ブランド・モデル・記事だけを足し込みます。同じ記事の重複は自動でスキップされます。<br>「JSON復元」は現在のデータを丸ごと置き換えます。<br>書き出したJSONには画像も含まれます。</p>
+  <div class="btn-row"><button class="btn ghost" onclick="closeModal()">閉じる</button></div>`);
+}
+function exportJSON(){
+  imgAll().then(imgs=>{
+    const payload={app:"kaitoriKB",exported:new Date().toISOString(),data:db,images:imgs};
+    const blob=new Blob([JSON.stringify(payload)],{type:"application/json"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`買取ナレッジ帳_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();URL.revokeObjectURL(a.href);
+  });
+}
+function importJSON(file){
+  if(!file)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const p=JSON.parse(rd.result);
+      if(!p.data||!p.data.categories)throw 0;
+      if(!confirm("現在のデータを読み込んだ内容で置き換えます。よろしいですか？"))return;
+      db=p.data;
+      if(!db.pinned) db.pinned=[];
+      if(!db.talks) db.talks=[];
+      save();
+      Promise.all((p.images||[]).map(im=>imgPut(im.id,im.data))).then(()=>{closeModal();go({v:"home"});});
+    }catch(e){alert("ファイルの形式が正しくありません。");}
+  };
+  rd.readAsText(file);
+}
+function resetSeed(){
+  if(!confirm("初期データ（2026年2〜6月のレポート抽出版）に戻します。自分で追加・編集した内容は消えます。よろしいですか？"))return;
+  db=JSON.parse(JSON.stringify(SEED));save();closeModal();go({v:"home"});
+}
+/* ---- 差分（追記のみ）マージ読み込み ---- */
+function mergeImport(file){
+  if(!file)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const p=JSON.parse(rd.result);
+      if(!p.data||!p.data.categories)throw 0;
+      let addedCat=0,addedBrand=0,addedModel=0,addedEntry=0,addedTalk=0;
+      p.data.categories.forEach(ic=>{
+        let c=db.categories.find(x=>x.id===ic.id)||db.categories.find(x=>x.name===ic.name);
+        if(!c){db.categories.push(ic);addedCat++;ic.brands.forEach(ib=>{addedBrand++;ib.models.forEach(im=>{addedModel++;addedEntry+=im.entries.length;});});return;}
+        (ic.brands||[]).forEach(ib=>{
+          let b=c.brands.find(x=>x.id===ib.id)||c.brands.find(x=>x.name===ib.name);
+          if(!b){c.brands.push(ib);addedBrand++;ib.models.forEach(im=>{addedModel++;addedEntry+=im.entries.length;});return;}
+          (ib.models||[]).forEach(im=>{
+            let m=b.models.find(x=>x.id===im.id)||b.models.find(x=>x.name===im.name);
+            if(!m){b.models.push(im);addedModel++;addedEntry+=im.entries.length;return;}
+            (im.entries||[]).forEach(ie=>{
+              const exists=m.entries.find(x=>x.id===ie.id)||m.entries.find(x=>x.month===ie.month&&x.type===ie.type&&x.text===ie.text);
+              if(!exists){m.entries.push(ie);addedEntry++;}
+            });
+          });
+        });
+      });
+      if(!db.talks) db.talks=[];
+      (p.data.talks||[]).forEach(it=>{
+        const exists=db.talks.find(x=>x.id===it.id)||db.talks.find(x=>x.scene===it.scene&&x.cat===it.cat&&x.text===it.text);
+        if(!exists){db.talks.push(it);addedTalk++;}
+      });
+      Promise.all((p.images||[]).map(im=>imgPut(im.id,im.data))).then(()=>{
+        save();closeModal();go({v:"home"});
+        alert(`追記が完了しました。\n新規カテゴリ:${addedCat} / 新規ブランド:${addedBrand} / 新規モデル:${addedModel} / 新規記事:${addedEntry} / 新規トーク:${addedTalk}`);
+      });
+    }catch(e){alert("ファイルの形式が正しくありません。");}
+  };
+  rd.readAsText(file);
+}
+
+buildIndex();
+render();
+</script>
+</body>
+</html>
