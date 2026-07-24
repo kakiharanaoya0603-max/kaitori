@@ -745,18 +745,27 @@ function allBrandsForCat(cat) {
 function searchBrandByAlias(q, cat) {
   const upper = q.toUpperCase();
   const hiragana = q;
-  const allBrands = allBrandsForCat(cat);
+  // カテゴリー未選択なら全カテゴリー横断で検索
+  const allBrands = cat ? allBrandsForCat(cat) : [
+    ...new Set([
+      ...(BRANDS['アパレル']||[]),
+      ...(BRANDS['バッグ']||[]),
+      ...(BRANDS['時計']||[]),
+      ...(BRANDS['ブランドジュエリー']||[]),
+      ...(BRANDS['NBジュエリー']||[]),
+      ...(BRANDS['ブランドアクセサリー']||[]),
+      ...db.map(e => e.brand)
+    ])
+  ];
   const matched = new Set();
   // 通常のブランド名マッチ
   allBrands.forEach(b => {
     if (b.toUpperCase().includes(upper)) matched.add(b);
   });
-  // エイリアスマッチ
+  // エイリアスマッチ（全ブランド対象）
   Object.entries(BRAND_ALIASES).forEach(([brand, aliases]) => {
-    if (!cat || allBrandsForCat(cat).includes(brand) || cat === '') {
-      const hit = aliases.some(a => a.toUpperCase().includes(upper) || a.includes(hiragana));
-      if (hit) matched.add(brand);
-    }
+    const hit = aliases.some(a => a.toUpperCase().includes(upper) || a.includes(hiragana));
+    if (hit) matched.add(brand);
   });
   return [...matched].slice(0, 10);
 }
