@@ -761,30 +761,34 @@ function clearImage() {
 }
 
 function register() {
-  const cat = document.getElementById('reg-cat').value;
-  const brand = document.getElementById('reg-brand').value.trim();
-  const model = document.getElementById('reg-model').value.trim();
-  const date = document.getElementById('reg-date').value;
-  const pAB = parseInt(document.getElementById('p-AB').value.replace(/,/g,'')) || null;
-  const pB = parseInt(document.getElementById('p-B').value.replace(/,/g,'')) || null;
-  const pD = parseInt(document.getElementById('p-D').value.replace(/,/g,'')) || null;
-  const size = document.getElementById('reg-size').value.trim();
-  const color = document.getElementById('reg-color').value.trim();
-  const line = document.getElementById('reg-line').value.trim();
-  const memo = document.getElementById('reg-memo').value.trim();
-  if (!cat) { toast('カテゴリーを選択してください'); return; }
-  if (!brand) { toast('ブランドを入力してください'); return; }
-  if (!model) { toast('モデル名を入力してください'); return; }
-  if (!pAB && !pB && !pD) { toast('金額を1つ以上入力してください'); return; }
-  db.push({ id: Date.now(), category: cat, brand, model, date, pAB, pB, pD, size, color, line, memo, image: currentImageData });
-  saveDB();
-  toast('登録しました！');
-  ['reg-cat','reg-brand','reg-model','p-AB','p-B','p-D','reg-size','reg-color','reg-line','reg-memo'].forEach(id => {
-    document.getElementById(id).value = '';
-  });
-  document.getElementById('reg-date').value = today();
-  clearImage();
-  document.getElementById('reg-cat').focus();
+  try {
+    const cat = document.getElementById('reg-cat').value;
+    const brand = document.getElementById('reg-brand').value.trim();
+    const model = document.getElementById('reg-model').value.trim();
+    const date = document.getElementById('reg-date').value;
+    const pAB = parseInt(String(document.getElementById('p-AB').value).replace(/,/g,'')) || null;
+    const pB = parseInt(String(document.getElementById('p-B').value).replace(/,/g,'')) || null;
+    const pD = parseInt(String(document.getElementById('p-D').value).replace(/,/g,'')) || null;
+    const size = document.getElementById('reg-size').value.trim();
+    const color = document.getElementById('reg-color').value.trim();
+    const line = document.getElementById('reg-line').value.trim();
+    const memo = document.getElementById('reg-memo').value.trim();
+    if (!cat) { toast('カテゴリーを選択してください'); return; }
+    if (!brand) { toast('ブランドを入力してください'); return; }
+    if (!model) { toast('モデル名を入力してください'); return; }
+    if (!pAB && !pB && !pD) { toast('金額を1つ以上入力してください'); return; }
+    db.push({ id: Date.now(), category: cat, brand, model, date, pAB, pB, pD, size, color, line, memo, image: currentImageData });
+    saveDB();
+    toast('登録しました！');
+    ['reg-cat','reg-brand','reg-model','p-AB','p-B','p-D','reg-size','reg-color','reg-line','reg-memo'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('reg-date').value = today();
+    clearImage();
+  } catch (err) {
+    toast('エラー: ' + err.message);
+  }
 }
 
 function search() {
