@@ -156,7 +156,7 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
       </select>
     </div>
 
-    <div class="form-group">
+    <div class="form-group normal-fields">
       <label class="form-label">ブランド</label>
       <div class="input-wrap">
         <input class="form-control" id="reg-brand" type="text" placeholder="入力して検索" autocomplete="off" oninput="suggestBrand()" autocorrect="off" autocapitalize="off">
@@ -164,11 +164,33 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
       </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group normal-fields">
       <label class="form-label">モデル名</label>
       <div class="input-wrap">
         <input class="form-control" id="reg-model" type="text" placeholder="モデル名を入力" autocomplete="off" oninput="suggestModel()" autocorrect="off">
         <div class="suggest-drop" id="model-drop"></div>
+      </div>
+    </div>
+
+    <!-- NBジュエリー専用 -->
+    <div class="form-group nb-fields" style="display:none">
+      <label class="form-label">石の種類</label>
+      <input class="form-control" id="reg-stone" type="text" placeholder="例: ダイヤ, ルビー, サファイア">
+    </div>
+    <div class="form-group nb-fields" style="display:none">
+      <label class="form-label">カラット</label>
+      <input class="form-control" id="reg-carat" type="text" inputmode="decimal" placeholder="例: 0.5, 1.25">
+    </div>
+    <div class="form-group nb-fields" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <label class="form-label">直径縦（mm）</label>
+          <input class="form-control" id="reg-diameter-v" type="text" inputmode="decimal" placeholder="例: 5.2">
+        </div>
+        <div>
+          <label class="form-label">直径横（mm）</label>
+          <input class="form-control" id="reg-diameter-h" type="text" inputmode="decimal" placeholder="例: 5.0">
+        </div>
       </div>
     </div>
 
@@ -198,7 +220,7 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
       </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group normal-fields">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div>
           <label class="form-label">サイズ</label>
@@ -211,7 +233,7 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
       </div>
     </div>
 
-    <div class="form-group">
+    <div class="form-group normal-fields">
       <label class="form-label">ライン名</label>
       <input class="form-control" id="reg-line" type="text" placeholder="例: バーバリーチェック, エクスプローラー">
     </div>
@@ -306,13 +328,16 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
     <input type="hidden" id="edit-id">
     <div class="form-group">
       <label class="form-label">カテゴリー</label>
-      <select class="form-control" id="edit-cat">
+      <select class="form-control" id="edit-cat" onchange="updateEditFields()">
         <option>アパレル</option><option>バッグ</option><option>時計</option>
         <option>ブランドジュエリー</option><option>NBジュエリー</option><option>ブランドアクセサリー</option>
       </select>
     </div>
-    <div class="form-group"><label class="form-label">ブランド</label><input class="form-control" id="edit-brand" type="text"></div>
-    <div class="form-group"><label class="form-label">モデル名</label><input class="form-control" id="edit-model" type="text"></div>
+    <div class="form-group edit-normal-fields"><label class="form-label">ブランド</label><input class="form-control" id="edit-brand" type="text"></div>
+    <div class="form-group edit-normal-fields"><label class="form-label">モデル名</label><input class="form-control" id="edit-model" type="text"></div>
+    <div class="form-group edit-nb-fields" style="display:none"><label class="form-label">石の種類</label><input class="form-control" id="edit-stone" type="text"></div>
+    <div class="form-group edit-nb-fields" style="display:none"><label class="form-label">カラット</label><input class="form-control" id="edit-carat" type="text" inputmode="decimal"></div>
+    <div class="form-group edit-nb-fields" style="display:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="form-label">直径縦（mm）</label><input class="form-control" id="edit-diameter-v" type="text" inputmode="decimal"></div><div><label class="form-label">直径横（mm）</label><input class="form-control" id="edit-diameter-h" type="text" inputmode="decimal"></div></div></div>
     <div class="form-group"><label class="form-label">日付</label><input class="form-control" id="edit-date" type="date"></div>
     <div class="form-group">
       <label class="form-label">買取金額（円）</label>
@@ -322,8 +347,8 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
         <div class="rank-block"><div class="rank-name d">D</div><input class="rank-input" id="edit-pD" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)"><div class="rank-unit">円</div></div>
       </div>
     </div>
-    <div class="form-group"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="form-label">サイズ</label><input class="form-control" id="edit-size" type="text"></div><div><label class="form-label">色</label><input class="form-control" id="edit-color" type="text"></div></div></div>
-    <div class="form-group"><label class="form-label">ライン名</label><input class="form-control" id="edit-line" type="text"></div>
+    <div class="form-group edit-normal-fields"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="form-label">サイズ</label><input class="form-control" id="edit-size" type="text"></div><div><label class="form-label">色</label><input class="form-control" id="edit-color" type="text"></div></div></div>
+    <div class="form-group edit-normal-fields"><label class="form-label">ライン名</label><input class="form-control" id="edit-line" type="text"></div>
     <div class="form-group">
       <label class="form-label">写真</label>
       <div id="edit-img-preview-wrap" style="display:none;margin-bottom:10px;position:relative">
@@ -787,7 +812,12 @@ function toast(msg) {
   setTimeout(() => el.classList.remove('show'), 2000);
 }
 
-function updateBrands() {}
+function updateBrands() {
+  const cat = document.getElementById('reg-cat').value;
+  const isNB = cat === 'NBジュエリー';
+  document.querySelectorAll('.normal-fields').forEach(el => el.style.display = isNB ? 'none' : '');
+  document.querySelectorAll('.nb-fields').forEach(el => el.style.display = isNB ? '' : 'none');
+}
 
 function allBrandsForCat(cat) {
   const base = BRANDS[cat] || [];
@@ -896,30 +926,44 @@ function clearImage() {
 async function register() {
   try {
     const cat = document.getElementById('reg-cat').value;
-    const brand = document.getElementById('reg-brand').value.trim();
-    const model = document.getElementById('reg-model').value.trim();
+    if (!cat) { toast('カテゴリーを選択してください'); return; }
+    const isNB = cat === 'NBジュエリー';
     const date = document.getElementById('reg-date').value;
     const pAB = parseInt(String(document.getElementById('p-AB').value).replace(/,/g,'')) || null;
     const pB = parseInt(String(document.getElementById('p-B').value).replace(/,/g,'')) || null;
     const pD = parseInt(String(document.getElementById('p-D').value).replace(/,/g,'')) || null;
-    const size = document.getElementById('reg-size').value.trim();
-    const color = document.getElementById('reg-color').value.trim();
-    const line = document.getElementById('reg-line').value.trim();
     const memo = document.getElementById('reg-memo').value.trim();
-    if (!cat) { toast('カテゴリーを選択してください'); return; }
-    if (!brand) { toast('ブランドを入力してください'); return; }
-    if (!model) { toast('モデル名を入力してください'); return; }
     if (!pAB && !pB && !pD) { toast('金額を1つ以上入力してください'); return; }
-    const entry = { id: Date.now(), category: cat, brand, model, date, pAB, pB, pD, size, color, line, memo, image: currentImageData };
+    let entry;
+    if (isNB) {
+      const stone = document.getElementById('reg-stone').value.trim();
+      const carat = document.getElementById('reg-carat').value.trim();
+      const dv = document.getElementById('reg-diameter-v').value.trim();
+      const dh = document.getElementById('reg-diameter-h').value.trim();
+      if (!stone) { toast('石の種類を入力してください'); return; }
+      // NBジュエリーは石の種類をbrand、"○ct △×□mm"のような表示をmodel相当に
+      const model = [carat && `${carat}ct`, (dv || dh) && `${dv}×${dh}mm`].filter(Boolean).join(' ');
+      entry = { id: Date.now(), category: cat, brand: stone, model: model || stone, date, pAB, pB, pD, stone, carat, diameterV: dv, diameterH: dh, memo, image: currentImageData };
+    } else {
+      const brand = document.getElementById('reg-brand').value.trim();
+      const model = document.getElementById('reg-model').value.trim();
+      if (!brand) { toast('ブランドを入力してください'); return; }
+      if (!model) { toast('モデル名を入力してください'); return; }
+      const size = document.getElementById('reg-size').value.trim();
+      const color = document.getElementById('reg-color').value.trim();
+      const line = document.getElementById('reg-line').value.trim();
+      entry = { id: Date.now(), category: cat, brand, model, date, pAB, pB, pD, size, color, line, memo, image: currentImageData };
+    }
     await putEntry(entry);
     db.push(entry);
     toast('登録しました！');
-    ['reg-cat','reg-brand','reg-model','p-AB','p-B','p-D','reg-size','reg-color','reg-line','reg-memo'].forEach(id => {
+    ['reg-cat','reg-brand','reg-model','p-AB','p-B','p-D','reg-size','reg-color','reg-line','reg-memo','reg-stone','reg-carat','reg-diameter-v','reg-diameter-h'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.value = '';
     });
     document.getElementById('reg-date').value = today();
     clearImage();
+    updateBrands();
   } catch (err) {
     toast('エラー: ' + err.message);
   }
@@ -982,14 +1026,29 @@ function buildCard(g, key) {
   const imgHtml = latestImg ? `<img src="${latestImg.image}" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--radius-sm);margin-bottom:12px;border:0.5px solid var(--border)">` : '';
 
   // サイズ・色・ライン（登録済みのものを集約表示）
+  const isNBCat = g.category === 'NBジュエリー';
   const sizes = [...new Set(g.entries.map(e => e.size).filter(Boolean))];
   const colors2 = [...new Set(g.entries.map(e => e.color).filter(Boolean))];
   const lines = [...new Set(g.entries.map(e => e.line).filter(Boolean))];
-  const tagsHtml = (sizes.length || colors2.length || lines.length) ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+  const stones = [...new Set(g.entries.map(e => e.stone).filter(Boolean))];
+  const carats = [...new Set(g.entries.map(e => e.carat).filter(Boolean))];
+  const dvs = [...new Set(g.entries.map(e => e.diameterV).filter(Boolean))];
+  const dhs = [...new Set(g.entries.map(e => e.diameterH).filter(Boolean))];
+  let tagsHtml = '';
+  if (isNBCat) {
+    tagsHtml = (stones.length || carats.length || dvs.length || dhs.length) ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+      ${stones.map(s => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">💎 ${s}</span>`).join('')}
+      ${carats.map(c => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">⚖ ${c}ct</span>`).join('')}
+      ${dvs.map(d => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">↕ ${d}mm</span>`).join('')}
+      ${dhs.map(d => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">↔ ${d}mm</span>`).join('')}
+    </div>` : '';
+  } else {
+    tagsHtml = (sizes.length || colors2.length || lines.length) ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
     ${sizes.map(s => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">📐 ${s}</span>`).join('')}
     ${colors2.map(c => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">🎨 ${c}</span>`).join('')}
     ${lines.map(l => `<span style="background:var(--surface2);border:0.5px solid var(--border);border-radius:4px;padding:3px 8px;font-size:12px;color:var(--text2)">✦ ${l}</span>`).join('')}
   </div>` : '';
+  }
 
   const latestMemo = g.entries.filter(e => e.memo).sort((a,b) => b.date.localeCompare(a.date))[0];
   const memoHtml = latestMemo ? `<div class="memo-box">📝 ${latestMemo.memo}</div>` : '';
@@ -1046,7 +1105,10 @@ function renderHist() {
   const sorted = [...db].sort((a,b) => b.date.localeCompare(a.date));
   el.innerHTML = sorted.slice(0, 100).map(e => {
     const prices = ['AB','B','D'].map(r => e['p'+r] ? `${r}:${e['p'+r].toLocaleString()}` : null).filter(Boolean).join(' / ');
-    const tags = [e.size, e.color, e.line].filter(Boolean).join(' · ');
+    const isNBEntry = e.category === 'NBジュエリー';
+    const tags = isNBEntry
+      ? [e.carat && `${e.carat}ct`, e.diameterV && `↕${e.diameterV}mm`, e.diameterH && `↔${e.diameterH}mm`].filter(Boolean).join(' · ')
+      : [e.size, e.color, e.line].filter(Boolean).join(' · ');
     const imgHtml = e.image ? `<img src="${e.image}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:0.5px solid var(--border);flex-shrink:0;margin-left:8px">` : '';
     return `<div class="hist-item">
       <div class="hist-left" onclick="editEntry(${e.id})" style="cursor:pointer;flex:1;min-width:0">
@@ -1061,6 +1123,13 @@ function renderHist() {
       </div>
     </div>`;
   }).join('');
+}
+
+function updateEditFields() {
+  const cat = document.getElementById('edit-cat').value;
+  const isNB = cat === 'NBジュエリー';
+  document.querySelectorAll('.edit-normal-fields').forEach(el => el.style.display = isNB ? 'none' : '');
+  document.querySelectorAll('.edit-nb-fields').forEach(el => el.style.display = isNB ? '' : 'none');
 }
 
 function editEntry(id) {
@@ -1078,7 +1147,12 @@ function editEntry(id) {
   document.getElementById('edit-size').value = e.size || '';
   document.getElementById('edit-color').value = e.color || '';
   document.getElementById('edit-line').value = e.line || '';
+  document.getElementById('edit-stone').value = e.stone || '';
+  document.getElementById('edit-carat').value = e.carat || '';
+  document.getElementById('edit-diameter-v').value = e.diameterV || '';
+  document.getElementById('edit-diameter-h').value = e.diameterH || '';
   document.getElementById('edit-memo').value = e.memo || '';
+  updateEditFields();
   const imgPrev = document.getElementById('edit-img-preview');
   const imgWrap = document.getElementById('edit-img-preview-wrap');
   if (e.image) {
@@ -1100,24 +1174,49 @@ async function saveEdit() {
   const id = parseInt(document.getElementById('edit-id').value);
   const idx = db.findIndex(x => x.id === id);
   if (idx < 0) return;
-  const brand = document.getElementById('edit-brand').value.trim();
-  const model = document.getElementById('edit-model').value.trim();
-  if (!brand || !model) { toast('ブランドとモデル名は必須です'); return; }
-  const updated = {
-    ...db[idx],
-    category: document.getElementById('edit-cat').value,
-    brand,
-    model,
-    date: document.getElementById('edit-date').value,
-    pAB: parseInt(String(document.getElementById('edit-pAB').value).replace(/,/g,'')) || null,
-    pB: parseInt(String(document.getElementById('edit-pB').value).replace(/,/g,'')) || null,
-    pD: parseInt(String(document.getElementById('edit-pD').value).replace(/,/g,'')) || null,
-    size: document.getElementById('edit-size').value.trim(),
-    color: document.getElementById('edit-color').value.trim(),
-    line: document.getElementById('edit-line').value.trim(),
-    memo: document.getElementById('edit-memo').value.trim(),
-    image: document.getElementById('edit-img-preview').dataset.image || null,
-  };
+  const cat = document.getElementById('edit-cat').value;
+  const isNB = cat === 'NBジュエリー';
+  let updated;
+  if (isNB) {
+    const stone = document.getElementById('edit-stone').value.trim();
+    const carat = document.getElementById('edit-carat').value.trim();
+    const dv = document.getElementById('edit-diameter-v').value.trim();
+    const dh = document.getElementById('edit-diameter-h').value.trim();
+    if (!stone) { toast('石の種類は必須です'); return; }
+    const model = [carat && `${carat}ct`, (dv || dh) && `${dv}×${dh}mm`].filter(Boolean).join(' ') || stone;
+    updated = {
+      ...db[idx],
+      category: cat, brand: stone, model,
+      date: document.getElementById('edit-date').value,
+      pAB: parseInt(String(document.getElementById('edit-pAB').value).replace(/,/g,'')) || null,
+      pB: parseInt(String(document.getElementById('edit-pB').value).replace(/,/g,'')) || null,
+      pD: parseInt(String(document.getElementById('edit-pD').value).replace(/,/g,'')) || null,
+      stone, carat, diameterV: dv, diameterH: dh,
+      // NBの場合、通常フィールドはクリア
+      size: '', color: '', line: '',
+      memo: document.getElementById('edit-memo').value.trim(),
+      image: document.getElementById('edit-img-preview').dataset.image || null,
+    };
+  } else {
+    const brand = document.getElementById('edit-brand').value.trim();
+    const model = document.getElementById('edit-model').value.trim();
+    if (!brand || !model) { toast('ブランドとモデル名は必須です'); return; }
+    updated = {
+      ...db[idx],
+      category: cat, brand, model,
+      date: document.getElementById('edit-date').value,
+      pAB: parseInt(String(document.getElementById('edit-pAB').value).replace(/,/g,'')) || null,
+      pB: parseInt(String(document.getElementById('edit-pB').value).replace(/,/g,'')) || null,
+      pD: parseInt(String(document.getElementById('edit-pD').value).replace(/,/g,'')) || null,
+      size: document.getElementById('edit-size').value.trim(),
+      color: document.getElementById('edit-color').value.trim(),
+      line: document.getElementById('edit-line').value.trim(),
+      // 通常の場合、NBフィールドはクリア
+      stone: '', carat: '', diameterV: '', diameterH: '',
+      memo: document.getElementById('edit-memo').value.trim(),
+      image: document.getElementById('edit-img-preview').dataset.image || null,
+    };
+  }
   try {
     await putEntry(updated);
     db[idx] = updated;
