@@ -296,6 +296,55 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- 編集モーダル -->
+<div id="edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;align-items:flex-start;justify-content:center;padding:0;overflow-y:auto">
+  <div style="background:var(--bg);width:100%;max-width:520px;border-radius:var(--radius);padding:20px;margin:20px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <div style="font-size:18px;font-weight:600">データを編集</div>
+      <button onclick="closeEditModal()" style="background:transparent;border:none;font-size:24px;cursor:pointer;color:var(--text2)">×</button>
+    </div>
+    <input type="hidden" id="edit-id">
+    <div class="form-group">
+      <label class="form-label">カテゴリー</label>
+      <select class="form-control" id="edit-cat">
+        <option>アパレル</option><option>バッグ</option><option>時計</option>
+        <option>ブランドジュエリー</option><option>NBジュエリー</option><option>ブランドアクセサリー</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">ブランド</label><input class="form-control" id="edit-brand" type="text"></div>
+    <div class="form-group"><label class="form-label">モデル名</label><input class="form-control" id="edit-model" type="text"></div>
+    <div class="form-group"><label class="form-label">日付</label><input class="form-control" id="edit-date" type="date"></div>
+    <div class="form-group">
+      <label class="form-label">買取金額（円）</label>
+      <div class="rank-row">
+        <div class="rank-block"><div class="rank-name ab">AB</div><input class="rank-input" id="edit-pAB" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)"><div class="rank-unit">円</div></div>
+        <div class="rank-block"><div class="rank-name b">B</div><input class="rank-input" id="edit-pB" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)"><div class="rank-unit">円</div></div>
+        <div class="rank-block"><div class="rank-name d">D</div><input class="rank-input" id="edit-pD" type="text" inputmode="numeric" placeholder="—" oninput="fmtPrice(this)"><div class="rank-unit">円</div></div>
+      </div>
+    </div>
+    <div class="form-group"><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><div><label class="form-label">サイズ</label><input class="form-control" id="edit-size" type="text"></div><div><label class="form-label">色</label><input class="form-control" id="edit-color" type="text"></div></div></div>
+    <div class="form-group"><label class="form-label">ライン名</label><input class="form-control" id="edit-line" type="text"></div>
+    <div class="form-group">
+      <label class="form-label">写真</label>
+      <div id="edit-img-preview-wrap" style="display:none;margin-bottom:10px;position:relative">
+        <img id="edit-img-preview" style="width:100%;max-height:220px;object-fit:cover;border-radius:var(--radius-sm);border:0.5px solid var(--border)">
+        <button onclick="clearEditImage()" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.5);color:#fff;border:none;border-radius:50%;width:28px;height:28px;font-size:16px;cursor:pointer">×</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <button class="btn" style="background:var(--surface2);color:var(--text);border:0.5px solid var(--border2);padding:12px;font-size:14px" onclick="document.getElementById('edit-img-camera').click()">📷 カメラ</button>
+        <button class="btn" style="background:var(--surface2);color:var(--text);border:0.5px solid var(--border2);padding:12px;font-size:14px" onclick="document.getElementById('edit-img-gallery').click()">🖼️ ロール</button>
+      </div>
+      <input type="file" id="edit-img-camera" accept="image/*" capture="environment" style="display:none" onchange="handleEditImage(this)">
+      <input type="file" id="edit-img-gallery" accept="image/*" style="display:none" onchange="handleEditImage(this)">
+    </div>
+    <div class="form-group"><label class="form-label">メモ</label><textarea class="form-control" id="edit-memo"></textarea></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:20px">
+      <button class="btn" style="background:var(--surface2);color:var(--text);border:0.5px solid var(--border2)" onclick="closeEditModal()">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
 
 <script>
 const BRAND_ALIASES = {
@@ -624,8 +673,90 @@ const BRANDS = {
   ブランドジュエリー: [], NBジュエリー: [], ブランドアクセサリー: []
 };
 
-let db = JSON.parse(localStorage.getItem('kaitori_v2') || '[]');
+let db = [];
 const charts = {};
+
+// IndexedDB初期化
+let idb = null;
+const IDB_NAME = 'kaitori_db';
+const IDB_STORE = 'entries';
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, 1);
+    req.onerror = () => reject(req.error);
+    req.onupgradeneeded = (e) => {
+      const d = e.target.result;
+      if (!d.objectStoreNames.contains(IDB_STORE)) {
+        d.createObjectStore(IDB_STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+  });
+}
+
+async function loadDB() {
+  try {
+    idb = await openIDB();
+    // 既存の全データ取得
+    const tx = idb.transaction(IDB_STORE, 'readonly');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.getAll();
+    db = await new Promise((res, rej) => {
+      req.onsuccess = () => res(req.result || []);
+      req.onerror = () => rej(req.error);
+    });
+    // localStorageから移行が必要ならする
+    const oldData = localStorage.getItem('kaitori_v2');
+    if (oldData && db.length === 0) {
+      try {
+        const migrated = JSON.parse(oldData);
+        if (Array.isArray(migrated) && migrated.length > 0) {
+          for (const entry of migrated) {
+            await putEntry(entry);
+          }
+          db = migrated;
+          toast(`旧データ${migrated.length}件を移行しました`);
+        }
+      } catch (e) { console.error('migration error', e); }
+    }
+  } catch (err) {
+    toast('DB初期化エラー: ' + err.message);
+  }
+}
+
+function putEntry(entry) {
+  return new Promise((res, rej) => {
+    const tx = idb.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.put(entry);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((res, rej) => {
+    const tx = idb.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.delete(id);
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+function clearAllEntries() {
+  return new Promise((res, rej) => {
+    const tx = idb.transaction(IDB_STORE, 'readwrite');
+    const store = tx.objectStore(IDB_STORE);
+    const req = store.clear();
+    req.onsuccess = () => res();
+    req.onerror = () => rej(req.error);
+  });
+}
+
+// 互換用: saveDB()は使わないがエラー回避のため残す
+function saveDB() { /* IndexedDBに直接putEntryするので不要 */ }
 
 function fmtPrice(el) {
   const raw = el.value.replace(/[^0-9]/g, '');
@@ -633,10 +764,12 @@ function fmtPrice(el) {
   el.value = parseInt(raw).toLocaleString();
 }
 
-function saveDB() { localStorage.setItem('kaitori_v2', JSON.stringify(db)); }
 function today() { return new Date().toISOString().slice(0,10); }
 
 document.getElementById('reg-date').value = today();
+
+// IndexedDB初期化
+loadDB();
 
 function showPage(p) {
   ['reg','search','hist'].forEach(id => {
@@ -738,13 +871,13 @@ function handleImage(input) {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX = 800;
+      const MAX = 500;
       let w = img.width, h = img.height;
       if (w > h && w > MAX) { h = h * MAX / w; w = MAX; }
       else if (h > MAX) { w = w * MAX / h; h = MAX; }
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      currentImageData = canvas.toDataURL('image/jpeg', 0.75);
+      currentImageData = canvas.toDataURL('image/jpeg', 0.60);
       document.getElementById('img-preview').src = currentImageData;
       document.getElementById('img-preview-wrap').style.display = 'block';
     };
@@ -760,8 +893,7 @@ function clearImage() {
   document.getElementById('img-preview').src = '';
 }
 
-function register() {
-  toast('登録処理開始');
+async function register() {
   try {
     const cat = document.getElementById('reg-cat').value;
     const brand = document.getElementById('reg-brand').value.trim();
@@ -778,8 +910,9 @@ function register() {
     if (!brand) { toast('ブランドを入力してください'); return; }
     if (!model) { toast('モデル名を入力してください'); return; }
     if (!pAB && !pB && !pD) { toast('金額を1つ以上入力してください'); return; }
-    db.push({ id: Date.now(), category: cat, brand, model, date, pAB, pB, pD, size, color, line, memo, image: currentImageData });
-    saveDB();
+    const entry = { id: Date.now(), category: cat, brand, model, date, pAB, pB, pD, size, color, line, memo, image: currentImageData };
+    await putEntry(entry);
+    db.push(entry);
     toast('登録しました！');
     ['reg-cat','reg-brand','reg-model','p-AB','p-B','p-D','reg-size','reg-color','reg-line','reg-memo'].forEach(id => {
       const el = document.getElementById(id);
@@ -916,13 +1049,16 @@ function renderHist() {
     const tags = [e.size, e.color, e.line].filter(Boolean).join(' · ');
     const imgHtml = e.image ? `<img src="${e.image}" style="width:48px;height:48px;object-fit:cover;border-radius:6px;border:0.5px solid var(--border);flex-shrink:0;margin-left:8px">` : '';
     return `<div class="hist-item">
-      <div class="hist-left">
+      <div class="hist-left" onclick="editEntry(${e.id})" style="cursor:pointer;flex:1;min-width:0">
         <div class="hist-brand">${e.brand} · ${e.category}</div>
         <div class="hist-model">${e.model}</div>
         <div class="hist-meta">${e.date} &nbsp; ${prices}円${tags ? ' · ' + tags : ''}</div>
       </div>
       ${imgHtml}
-      <button class="hist-del" onclick="delEntry(${e.id})">削除</button>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-left:8px;flex-shrink:0">
+        <button class="hist-del" onclick="editEntry(${e.id})" style="color:var(--rank-ab);margin-left:0">編集</button>
+        <button class="hist-del" onclick="delEntry(${e.id})" style="margin-left:0">削除</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -960,32 +1096,37 @@ function closeEditModal() {
   document.getElementById('edit-modal').style.display = 'none';
 }
 
-function saveEdit() {
+async function saveEdit() {
   const id = parseInt(document.getElementById('edit-id').value);
   const idx = db.findIndex(x => x.id === id);
   if (idx < 0) return;
   const brand = document.getElementById('edit-brand').value.trim();
   const model = document.getElementById('edit-model').value.trim();
   if (!brand || !model) { toast('ブランドとモデル名は必須です'); return; }
-  db[idx] = {
+  const updated = {
     ...db[idx],
     category: document.getElementById('edit-cat').value,
     brand,
     model,
     date: document.getElementById('edit-date').value,
-    pAB: parseInt(document.getElementById('edit-pAB').value.replace(/,/g,'')) || null,
-    pB: parseInt(document.getElementById('edit-pB').value.replace(/,/g,'')) || null,
-    pD: parseInt(document.getElementById('edit-pD').value.replace(/,/g,'')) || null,
+    pAB: parseInt(String(document.getElementById('edit-pAB').value).replace(/,/g,'')) || null,
+    pB: parseInt(String(document.getElementById('edit-pB').value).replace(/,/g,'')) || null,
+    pD: parseInt(String(document.getElementById('edit-pD').value).replace(/,/g,'')) || null,
     size: document.getElementById('edit-size').value.trim(),
     color: document.getElementById('edit-color').value.trim(),
     line: document.getElementById('edit-line').value.trim(),
     memo: document.getElementById('edit-memo').value.trim(),
     image: document.getElementById('edit-img-preview').dataset.image || null,
   };
-  saveDB();
-  renderHist();
-  closeEditModal();
-  toast('更新しました');
+  try {
+    await putEntry(updated);
+    db[idx] = updated;
+    renderHist();
+    closeEditModal();
+    toast('更新しました');
+  } catch (err) {
+    toast('更新エラー: ' + err.message);
+  }
 }
 
 function handleEditImage(input) {
@@ -996,13 +1137,13 @@ function handleEditImage(input) {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const MAX = 800;
+      const MAX = 500;
       let w = img.width, h = img.height;
       if (w > h && w > MAX) { h = h * MAX / w; w = MAX; }
       else if (h > MAX) { w = w * MAX / h; h = MAX; }
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      const data = canvas.toDataURL('image/jpeg', 0.75);
+      const data = canvas.toDataURL('image/jpeg', 0.60);
       const prev = document.getElementById('edit-img-preview');
       prev.src = data;
       prev.dataset.image = data;
@@ -1019,16 +1160,27 @@ function clearEditImage() {
   document.getElementById('edit-img-preview-wrap').style.display = 'none';
 }
 
-function delEntry(id) {
-  db = db.filter(e => e.id !== id);
-  saveDB();
-  renderHist();
-  toast('削除しました');
+async function delEntry(id) {
+  try {
+    await dbDelete(id);
+    db = db.filter(e => e.id !== id);
+    renderHist();
+    toast('削除しました');
+  } catch (err) {
+    toast('削除エラー: ' + err.message);
+  }
 }
 
-function clearAll() {
+async function clearAll() {
   if (!confirm('全データを削除しますか？')) return;
-  db = []; saveDB(); renderHist(); toast('全削除しました');
+  try {
+    await clearAllEntries();
+    db = [];
+    renderHist();
+    toast('全削除しました');
+  } catch (err) {
+    toast('削除エラー: ' + err.message);
+  }
 }
 
 function exportData() {
@@ -1053,21 +1205,23 @@ function importData() {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       try {
         const imported = JSON.parse(ev.target.result);
         if (!Array.isArray(imported)) throw new Error('不正な形式');
         const mode = confirm(`${imported.length}件のデータを取り込みます。\n\n[OK] 現在のデータに追加\n[キャンセル] 中止`);
         if (!mode) return;
-        // 重複除去（同じIDは上書き）
+        toast('取り込み中...');
         const existingIds = new Set(db.map(e => e.id));
         const newEntries = imported.filter(e => !existingIds.has(e.id));
+        for (const entry of newEntries) {
+          await putEntry(entry);
+        }
         db = [...db, ...newEntries];
-        saveDB();
         renderHist();
         toast(`${newEntries.length}件を追加しました`);
       } catch (err) {
-        toast('ファイルの読み込みに失敗しました');
+        toast('取り込みエラー: ' + err.message);
       }
     };
     reader.readAsText(file);
