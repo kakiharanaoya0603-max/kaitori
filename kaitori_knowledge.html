@@ -29,6 +29,12 @@ header{position:sticky;top:0;z-index:50;background:linear-gradient(to bottom,var
 .searchbar input:focus{border-color:var(--gold)}
 .searchbar input::placeholder{color:#6d6759}
 /* breadcrumb */
+.link-row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 2px}
+.link-btn{background:var(--ink2);border:1px solid var(--line);color:var(--gold-soft);border-radius:8px;padding:8px 12px;font-size:.78rem;cursor:pointer}
+.link-btn:active{background:var(--ink3)}
+.h-links{display:flex;gap:6px;align-items:center;margin-top:8px;overflow-x:auto}
+.h-links .lbl{font-size:.62rem;color:var(--paper-dim);white-space:nowrap}
+.h-links .icon-btn{white-space:nowrap}
 .crumbs{display:flex;align-items:center;gap:6px;padding:10px 14px 0;font-size:.78rem;color:var(--paper-dim);flex-wrap:wrap}
 .crumbs a{color:var(--gold-soft);text-decoration:none;cursor:pointer}
 .crumbs .sep{color:#5a5548}
@@ -146,6 +152,12 @@ main{padding:12px 14px 20px;max-width:760px;margin:0 auto}
     <button class="icon-btn" onclick='go({v:"talks"})'>トーク</button>
     <button class="icon-btn" onclick='go({v:"archive"})'>月別</button>
     <button class="icon-btn" onclick="openSettings()">設定</button>
+  </div>
+  <div class="h-links">
+    <span class="lbl">ほかのツール</span>
+    <button class="icon-btn" onclick="openMemo('')">📝 買取メモ</button>
+    <button class="icon-btn" onclick="openSouba('','')">📈 相場チェッカー</button>
+    <button class="icon-btn" onclick="soubaBase(true)" title="相場チェッカーのURLを設定">⚙</button>
   </div>
   <div class="searchbar">
     <input id="searchInput" type="search" placeholder="ブランド・モデル・キーワード検索（かな/カナ/英語OK）" oninput="onSearch(this.value)">
@@ -691,6 +703,10 @@ function render(){
     const ents=[...m.entries].sort((a,x)=>(x.month||"").localeCompare(a.month||""));
     const filtered=filterType?ents.filter(e=>e.type===filterType):ents;
     main.innerHTML=`
+      <div class="link-row">
+        <button class="link-btn" data-q="${esc(b.name+" "+m.name)}" data-cat="${esc(c.name)}" onclick="openSouba(this.dataset.q,this.dataset.cat)">📈 今の相場を調べる</button>
+        <button class="link-btn" data-q="${esc(m.name)}" onclick="openMemo(this.dataset.q)">📝 買取メモの実績を見る</button>
+      </div>
       <div class="chips">
         <div class="chip ${filterType===""?"on":""}" onclick='filterType="";render()'>すべて</div>
         ${TYPES.map(t=>`<div class="chip ${filterType===t?"on":""}" onclick='filterType="${t}";render()'>${t}</div>`).join("")}
@@ -769,14 +785,16 @@ function onSearch(q){searchQ=q.trim();render();}
 function renderSearch(main){
   const q=norm(searchQ);
   if(!q){render();return;}
+  const toks=searchQ.split(/[\s\u3000]+/).map(norm).filter(Boolean); // スペース区切りの各ワード
   const hits=[];
   db.categories.forEach(c=>c.brands.forEach(b=>{
     const bKey=norm(b.name+(b.en||"")+(b.kana||""));
     b.models.forEach(m=>{
       const mKey=norm(m.name+(m.alias||""));
-      const nameHit=bKey.includes(q)||mKey.includes(q);
+      const nameHit=bKey.includes(q)||mKey.includes(q)||toks.every(t=>bKey.includes(t)||mKey.includes(t));
       m.entries.forEach(e=>{
-        if(nameHit||norm(e.text).includes(q)) hits.push({e,c,b,m});
+        const eKey=norm(e.text);
+        if(nameHit||eKey.includes(q)||toks.every(t=>bKey.includes(t)||mKey.includes(t)||eKey.includes(t))) hits.push({e,c,b,m});
       });
       if((nameHit)&&m.entries.length===0) hits.push({e:null,c,b,m});
     });
@@ -1087,7 +1105,39 @@ function mergeImport(file){
   rd.readAsText(file);
 }
 
+/* ============ 連携（買取メモ・相場チェッカー） ============ */
+const LINK_MEMO="kaitori_app.html";
+const SOUBA_KEY="souba_checker_url";   // 相場チェッカーのURL（この端末のブラウザに保存）
+// 相場チェッカーのURL。未設定なら聞く。ask=true なら設定し直す
+function soubaBase(ask){
+  let u=localStorage.getItem(SOUBA_KEY)||"";
+  if(!u||ask){
+    const v=prompt("相場チェッカーのURLを入力\n（相場チェッカーの左メニュー「📱 スマホで見る」に出ているURL）\n例：http://100.xx.xx.xx:8501",u);
+    if(v===null) return ask?u:"";
+    u=v.trim().replace(/\/+$/,"");
+    if(u&&!/^https?:\/\//i.test(u)) u="http://"+u;
+    localStorage.setItem(SOUBA_KEY,u);
+    if(ask&&u) alert("相場チェッカーのURLを保存しました");
+  }
+  return u;
+}
+function openSouba(q,cat){
+  const base=soubaBase(false);
+  if(!base) return;
+  const p=new URLSearchParams();
+  if(q) p.set("q",q);
+  if(cat) p.set("cat",cat);
+  const url=base+(q?"/items":"/")+(p.toString()?"?"+p.toString():"");
+  if(!window.open(url,"_blank")) location.href=url;
+}
+function openMemo(q){location.href=LINK_MEMO+(q?"?q="+encodeURIComponent(q):"");}
+
 buildIndex();
+// ほかのツールから検索ワードが渡されていたら、検索した状態で開く
+(function(){
+  const q0=new URLSearchParams(location.search).get("q");
+  if(q0){document.getElementById("searchInput").value=q0;searchQ=q0.trim();}
+})();
 render();
 </script>
 </body>
