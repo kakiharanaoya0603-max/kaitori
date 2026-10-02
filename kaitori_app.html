@@ -126,6 +126,11 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
 /* Page title */
+.link-bar { flex: none; display: flex; gap: 6px; align-items: center; padding: calc(env(safe-area-inset-top, 0px) + 8px) 16px 8px; background: var(--surface); border-bottom: 0.5px solid var(--border); overflow-x: auto; }
+.link-bar .link-label { font-size: 11px; color: var(--text3); white-space: nowrap; margin-right: 2px; }
+.link-bar .btn-sm { white-space: nowrap; cursor: pointer; }
+.link-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.link-row .btn-sm { cursor: pointer; }
 .page-title { font-size: 22px; font-weight: 700; margin-bottom: 20px; letter-spacing: -0.03em; }
 .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
 
@@ -139,6 +144,12 @@ textarea.form-control { resize: none; min-height: 80px; font-size: 15px; }
 </head>
 <body>
 <div id="app">
+  <!-- 連携バー（ナレッジ帳・相場チェッカーへ） -->
+  <div class="link-bar">
+    <button class="btn-sm" onclick="openKB('')">📚 ナレッジ帳</button>
+    <button class="btn-sm" onclick="openSouba('','')">📈 相場チェッカー</button>
+    <button class="btn-sm" onclick="soubaBase(true)" title="相場チェッカーのURLを設定">⚙</button>
+  </div>
   <!-- 登録 -->
   <div class="page active" id="page-reg">
     <div class="page-title">登録</div>
@@ -793,8 +804,47 @@ function today() { return new Date().toISOString().slice(0,10); }
 
 document.getElementById('reg-date').value = today();
 
-// IndexedDB初期化
-loadDB();
+// IndexedDB初期化（読み込み後、ほかのツールから渡された検索ワードがあれば検索タブを開く）
+loadDB().then(applyLinkQuery);
+
+/* ============ 連携（買取ナレッジ帳・相場チェッカー） ============ */
+const LINK_KB = 'kaitori_knowledge.html';
+const SOUBA_KEY = 'souba_checker_url';   // 相場チェッカーのURL（この端末のブラウザに保存）
+
+function hAttr(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+// 相場チェッカーのURL。未設定なら聞く。ask=true なら設定し直す
+function soubaBase(ask) {
+  let u = localStorage.getItem(SOUBA_KEY) || '';
+  if (!u || ask) {
+    const v = prompt('相場チェッカーのURLを入力\n（相場チェッカーの左メニュー「📱 スマホで見る」に出ているURL）\n例：http://100.xx.xx.xx:8501', u);
+    if (v === null) return ask ? u : '';
+    u = v.trim().replace(/\/+$/, '');
+    if (u && !/^https?:\/\//i.test(u)) u = 'http://' + u;
+    localStorage.setItem(SOUBA_KEY, u);
+    if (ask && u) toast('相場チェッカーのURLを保存しました');
+  }
+  return u;
+}
+function openSouba(q, cat) {
+  const base = soubaBase(false);
+  if (!base) return;
+  const p = new URLSearchParams();
+  if (q) p.set('q', q);
+  if (cat) p.set('cat', cat);
+  const url = base + (q ? '/items' : '/') + (p.toString() ? '?' + p.toString() : '');
+  if (!window.open(url, '_blank')) location.href = url;
+}
+function openKB(q) {
+  location.href = LINK_KB + (q ? '?q=' + encodeURIComponent(q) : '');
+}
+function applyLinkQuery() {
+  const q = new URLSearchParams(location.search).get('q');
+  if (!q) return;
+  document.getElementById('s-q').value = q;
+  showPage('search');
+}
 
 function showPage(p) {
   ['reg','search','hist'].forEach(id => {
@@ -977,17 +1027,23 @@ function search() {
   let rows = db;
   if (cat) rows = rows.filter(e => e.category === cat);
   if (q) {
-    const qUpper = q.toUpperCase();
-    const matchedBrands = new Set();
-    Object.entries(BRAND_ALIASES).forEach(([brand, aliases]) => {
-      if (brand.toUpperCase().includes(qUpper) || aliases.some(a => a.toUpperCase().includes(qUpper) || a.includes(document.getElementById('s-q').value.trim()))) {
-        matchedBrands.add(brand.toUpperCase());
-      }
+    const raw = document.getElementById('s-q').value.trim();
+    const tokens = raw.split(/[\s\u3000]+/).filter(Boolean);
+    // ワードごとに「そのワードに当てはまるブランド」を先に調べる（略称・かな対応）
+    const brandSets = tokens.map(t => {
+      const tU = t.toUpperCase();
+      const set = new Set();
+      Object.entries(BRAND_ALIASES).forEach(([brand, aliases]) => {
+        if (brand.toUpperCase().includes(tU) || aliases.some(a => a.toUpperCase().includes(tU) || a.includes(t))) {
+          set.add(brand.toUpperCase());
+        }
+      });
+      return set;
     });
-    rows = rows.filter(e => 
-      (e.brand + e.model).toUpperCase().includes(qUpper) ||
-      matchedBrands.has(e.brand.toUpperCase())
-    );
+    rows = rows.filter(e => tokens.every((t, i) =>
+      (e.brand + e.model).toUpperCase().includes(t.toUpperCase()) ||
+      brandSets[i].has(e.brand.toUpperCase())
+    ));
   }
   if (rank) rows = rows.filter(e => e['p'+rank] != null);
   if (!rows.length) {
@@ -1061,6 +1117,10 @@ function buildCard(g, key) {
     <div class="price-row">${priceCells}</div>
     <div class="chart-wrap"><canvas id="${cid}"></canvas></div>
     ${memoHtml}
+    <div class="link-row">
+      <button class="btn-sm" data-q="${hAttr(g.brand + ' ' + g.model)}" data-cat="${hAttr(g.category)}" onclick="openSouba(this.dataset.q, this.dataset.cat)">📈 今の相場を調べる</button>
+      <button class="btn-sm" data-q="${hAttr(g.model)}" onclick="openKB(this.dataset.q)">📚 ナレッジ帳で見る</button>
+    </div>
   </div>`;
 }
 
